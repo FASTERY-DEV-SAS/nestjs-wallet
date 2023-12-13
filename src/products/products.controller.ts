@@ -22,7 +22,7 @@ export class ProductsController {
   }
 
   @Get()
-  @Auth(ValidRoles.user)
+  // @Auth(ValidRoles.user)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.productsService.findAll(paginationDto);
   }
