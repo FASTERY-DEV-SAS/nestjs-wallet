@@ -1,7 +1,7 @@
 import { BeforeInsert, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ProductImage } from ".";
 import { User } from "src/auth/entities/user.entity";
-
+ 
 @Entity({name: 'products'})
 export class Product {
     @PrimaryGeneratedColumn('uuid')

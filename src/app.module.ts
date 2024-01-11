@@ -6,6 +6,8 @@ import { CommonModule } from './common/common.module';
 import { SeedModule } from './seed/seed.module';
 import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
+import { WalletsModule } from './wallets/wallets.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 
 @Module({
@@ -26,7 +28,9 @@ import { AuthModule } from './auth/auth.module';
     CommonModule,
     SeedModule,
     FilesModule,
-    AuthModule
+    AuthModule,
+    WalletsModule,
+    TransactionsModule
   ],
   controllers: [],
   providers: [],
