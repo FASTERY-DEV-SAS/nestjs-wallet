@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { User } from "src/auth/entities/user.entity";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({name: 'wallets'})
 export class Wallet {
@@ -8,6 +9,9 @@ export class Wallet {
     @Column({ type: 'text', nullable: true })
     holder_type: string;
 
+    @Column({ type: 'text'})
+    label_wallet: string;
+
     @Column({ type: 'text', nullable: true })
     holder_id: number | string;
 
@@ -16,9 +20,6 @@ export class Wallet {
 
     @Column({ type: 'text', nullable: true })
     slug: string;
-
-    @Column({ type: 'text', nullable: true })
-    uuid: string;
 
     @Column({ type: 'text', nullable: true })
     description: string;
@@ -37,4 +38,10 @@ export class Wallet {
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     updated_at: Date;
+
+    @ManyToOne(
+        () => User, 
+        (user) => user.wallet,
+    )
+    user: User;
 }

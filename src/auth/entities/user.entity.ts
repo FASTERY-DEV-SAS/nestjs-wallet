@@ -1,5 +1,5 @@
-import { Product } from "src/products/entities";
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Wallet } from "src/wallets/entities/wallet.entity";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
 export class User {
@@ -10,13 +10,16 @@ export class User {
     @Column({ unique: true })
     email: string;
 
+    @Column({ unique: true })
+    id_user: string;
+
+    @Column()
+    type_id_user: string;
+
     @Column('text',{
         select: false
     })
     password: string;
-
-    @Column('text')
-    fullName: string;
 
     @Column('bool', { default: true })
     isActive: boolean;
@@ -24,15 +27,12 @@ export class User {
     @Column('text', { array: true, default: ['user'] })
     roles: string[];
 
+
     @OneToMany(
-        () => Product,
-        (product) => product.user,
-        // {
-        //     cascade: true,
-        //     eager: true
-        // }
+        () => Wallet, 
+        (wallet) => wallet.user,
     )
-    product: Product;
+    wallet: Wallet;
 
 
     @BeforeInsert()
