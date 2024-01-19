@@ -8,5 +8,5 @@ export class CreateWalletDto {
     @IsString()
     @MinLength(3)
     @MaxLength(50)
-    description: string;
+    description_wallet: string;
 }

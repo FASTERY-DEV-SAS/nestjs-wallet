@@ -1,3 +1,5 @@
+import { Transaction } from "src/transactions/entities/transaction.entity";
+import { Transfer } from "src/transfers/entities/transfer.entity";
 import { Wallet } from "src/wallets/entities/wallet.entity";
 import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -41,9 +43,18 @@ export class User {
 
     @OneToMany(
         () => Wallet, 
-        (wallet) => wallet.user,
+        (wallet) => wallet.holder,
     )
     wallet: Wallet;
+
+    @OneToMany(() => Transaction, (transaction) => transaction.user)
+    transactions: Transaction[];
+
+    @OneToMany(() => Transfer, (transfer) => transfer.fromUser)
+    sentTransfers: Transfer[];
+
+    @OneToMany(() => Transfer, (transfer) => transfer.toUser)
+    receivedTransfers: Transfer[];
 
 
     @BeforeInsert()

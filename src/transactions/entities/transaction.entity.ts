@@ -1,6 +1,7 @@
 import { User } from "src/auth/entities/user.entity";
+import { Transfer } from "src/transfers/entities/transfer.entity";
 import { Wallet } from "src/wallets/entities/wallet.entity";
-import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({name: 'transactions'})
 export class Transaction {
@@ -24,7 +25,7 @@ export class Transaction {
 
     @ManyToOne(
         () => Wallet, 
-        (wallet) => wallet.user,
+        (wallet) => wallet.transactions,
     )
     wallet: Wallet;
 
@@ -33,9 +34,12 @@ export class Transaction {
     type: string;
 
 
-    @ManyToOne(
-        () => User, 
-        (user_id) => user_id.transaction,
-    )
-    user_id: User;
+    @ManyToOne(() => User, (user) => user.transactions)
+    user: User;
+
+    @OneToMany(() => Transfer, (transfer) => transfer.deposit)
+    depositTransfers: Transfer[];
+
+    @OneToMany(() => Transfer, (transfer) => transfer.withdraw)
+    withdrawTransfers: Transfer[];
 }

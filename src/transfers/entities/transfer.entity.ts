@@ -1,4 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { User } from "src/auth/entities/user.entity";
+import { Transaction } from "src/transactions/entities/transaction.entity";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({name: 'transfers'})
 export class Transfer {
@@ -8,17 +10,23 @@ export class Transfer {
     @Column('text')
     status: string;
 
-    // deposit_id
+    @ManyToOne(() => Transaction, (transaction) => transaction.depositTransfers)
+    deposit: Transaction;
 
-    // withdraw_id
+    @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers)
+    withdraw: Transaction;
 
-    // from_user
+    @ManyToOne(() => User, (user) => user.sentTransfers)
+    fromUser: User;
 
-    // to_user
+    @ManyToOne(() => User, (user) => user.receivedTransfers)
+    toUser: User;
 
-    // discount
+    @Column({ type: 'text', nullable: true })
+    discount: string;
 
-    // fee
+    @Column({ type: 'text', nullable: true })
+    fee: string;
 
     @CreateDateColumn({
     })
