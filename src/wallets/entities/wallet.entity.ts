@@ -1,5 +1,6 @@
 import { User } from "src/auth/entities/user.entity";
-import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Transaction } from "src/transactions/entities/transaction.entity";
+import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({name: 'wallets'})
 export class Wallet {
@@ -10,7 +11,7 @@ export class Wallet {
     label_wallet: string;
 
     @Column({ type: 'text', nullable: true })
-    description: string;
+    description_wallet: string;
 
     @Column({ type: 'jsonb', nullable: true })
     meta: any | null;
@@ -31,7 +32,13 @@ export class Wallet {
 
     @ManyToOne(
         () => User, 
-        (user) => user.wallet,
+        (holder) => holder.wallet,
     )
-    user: User;
+    holder: User;
+
+    @OneToMany(
+        () => Transaction,
+        (transaction) => transaction.wallet,
+    )
+    transactions: Transaction[];
 }

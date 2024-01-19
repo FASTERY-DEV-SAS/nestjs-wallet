@@ -15,12 +15,12 @@ export class WalletsService {
   ) { }
 
 
-  async create(createWalletDto: CreateWalletDto, user : User) {
+  async create(createWalletDto: CreateWalletDto, holder : User) {
     try {
       const { ...walletDetails } = createWalletDto;
       const newwallet = this.walletRepository.create({
         ...walletDetails,
-        user
+        holder
       });
       const wallet = await this.walletRepository.save(newwallet);
 
