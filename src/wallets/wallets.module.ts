@@ -1,20 +1,19 @@
 import { Module } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
 import { WalletsController } from './wallets.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { AuthModule } from 'src/auth/auth.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   controllers: [WalletsController],
   providers: [WalletsService],
   imports: [
-    AuthModule,
+    AuthModule, 
     TypeOrmModule.forFeature([
       Wallet
     ])
   ],
-  exports: [WalletsService]
+  exports: [WalletsService,TypeOrmModule]
 })
 export class WalletsModule {}
-

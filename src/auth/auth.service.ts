@@ -18,6 +18,7 @@ export class AuthService {
   ) { }
 
   async create(createUserDto: CreateUserDto) {
+    // TODO: VERIFICAR ID O RUC
     try {
       const { password, ...userData } = createUserDto;
       const user = this.userRepository.create({
@@ -45,7 +46,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Invalid credentials (email)');
 
     if (!bcrypt.compareSync(password, user.password)) throw new UnauthorizedException('Invalid credentials (password)');
-
+    delete user.password;
     return {
       ...user,
       token: this.getJwtToken({id:user.id})

@@ -6,6 +6,12 @@ export class CreateUserDto {
     email: string;
 
     @IsString()
+    id_user: string;
+
+    @IsString()
+    type_id_user: string;
+
+    @IsString()
     @MinLength(6)
     @MaxLength(50)
     @Matches(
@@ -13,8 +19,4 @@ export class CreateUserDto {
         message: 'The password must have a Uppercase, lowercase letter and a number'
     })
     password: string;
-
-    @IsString()
-    @MinLength(3)
-    fullName: string;
 }
