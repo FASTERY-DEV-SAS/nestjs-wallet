@@ -32,9 +32,9 @@ export class Wallet {
 
     @ManyToOne(
         () => User, 
-        (holder) => holder.wallet,
+        (user) => user.wallet,
     )
-    holder: User;
+    user: User;
 
     @OneToMany(
         () => Transaction,

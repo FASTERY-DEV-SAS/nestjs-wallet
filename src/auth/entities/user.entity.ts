@@ -43,7 +43,7 @@ export class User {
 
     @OneToMany(
         () => Wallet, 
-        (wallet) => wallet.holder,
+        (wallet) => wallet.user,
     )
     wallet: Wallet;
 

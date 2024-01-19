@@ -8,7 +8,7 @@ export class Transaction {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'decimal', precision: 12, scale: 2 })
+    @Column({ type: 'decimal', precision: 10, scale: 2,default: 0 })
     amount: number;
 
     @Column('bool', { default: false })
