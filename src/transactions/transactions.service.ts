@@ -9,7 +9,6 @@ import { Wallet } from 'src/wallets/entities/wallet.entity';
 
 @Injectable()
 export class TransactionsService {
-
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
@@ -18,9 +17,9 @@ export class TransactionsService {
     private readonly walletRepository: Repository<Wallet>,
 
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
-  async create(createTransactionDto: CreateTransactionDto, user : User) {
+  async create(createTransactionDto: CreateTransactionDto, user: User) {
     const transaction = this.transactionRepository.create(createTransactionDto);
     const newtransaction = await this.transactionRepository.save(transaction);
     return newtransaction;

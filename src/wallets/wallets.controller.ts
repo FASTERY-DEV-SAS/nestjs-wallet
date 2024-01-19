@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { WalletsService } from './wallets.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
@@ -9,17 +17,14 @@ import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 
 @Controller('wallets')
 export class WalletsController {
-  
   constructor(private readonly walletsService: WalletsService) {}
 
   @Post()
   @Auth(ValidRoles.user)
-  create(
-    @Body() createWalletDto: CreateWalletDto,
-    @GetUser() user: User) {
-    return this.walletsService.create(createWalletDto,user);
+  create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
+    return this.walletsService.create(createWalletDto, user);
   }
- 
+
   @Get()
   findAll() {
     return this.walletsService.findAll();

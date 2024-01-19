@@ -8,12 +8,7 @@ import { AuthModule } from 'src/auth/auth.module';
 @Module({
   controllers: [WalletsController],
   providers: [WalletsService],
-  imports: [
-    AuthModule, 
-    TypeOrmModule.forFeature([
-      Wallet
-    ])
-  ],
-  exports: [WalletsService,TypeOrmModule]
+  imports: [AuthModule, TypeOrmModule.forFeature([Wallet])],
+  exports: [WalletsService, TypeOrmModule],
 })
 export class WalletsModule {}

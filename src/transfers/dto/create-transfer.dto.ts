@@ -1,8 +1,7 @@
-import { IsIn, IsString } from "class-validator";
+import { IsIn, IsString } from 'class-validator';
 
 export class CreateTransferDto {
-
-    @IsString()
-    @IsIn(['exchange','transfer','paid','refund','gift'])
-    type: string;
+  @IsString()
+  @IsIn(['exchange', 'transfer', 'paid', 'refund', 'gift'])
+  type: string;
 }

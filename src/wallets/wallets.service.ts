@@ -8,26 +8,22 @@ import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class WalletsService {
-
   constructor(
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
-  ) { }
+  ) {}
 
-
-  async create(createWalletDto: CreateWalletDto, user : User) {
+  async create(createWalletDto: CreateWalletDto, user: User) {
     try {
       const { ...walletDetails } = createWalletDto;
       const newwallet = this.walletRepository.create({
         ...walletDetails,
-        user
+        user,
       });
       const wallet = await this.walletRepository.save(newwallet);
 
-      return {...wallet };
-
-    } catch (error) {
-    }
+      return { ...wallet };
+    } catch (error) {}
   }
 
   findAll() {
