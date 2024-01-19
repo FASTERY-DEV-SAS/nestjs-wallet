@@ -13,7 +13,7 @@ export class TransfersController {
   ) {}
 
   @Post('transfer')
-  async transferMoney(@Body() transferData: { fromWalletId: string, toWalletId: string, amount: number }): Promise<void> {
+  async transferMoney(@Body() transferData: { fromWalletId: string, toWalletId: string, amount: number }) {
     const { fromWalletId, toWalletId, amount } = transferData;
     return this.transfersService.transferMoney(fromWalletId, toWalletId, amount);
   }
