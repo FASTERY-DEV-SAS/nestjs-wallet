@@ -1,5 +1,5 @@
 import { Wallet } from "src/wallets/entities/wallet.entity";
-import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, Transaction, UpdateDateColumn } from "typeorm";
 
 @Entity('users')
 export class User {
@@ -44,6 +44,12 @@ export class User {
         (wallet) => wallet.user,
     )
     wallet: Wallet;
+
+    @OneToMany(
+        () => Transaction, 
+        (transaction) => transaction.user_id,
+    )
+    transaction: Transaction;
 
 
     @BeforeInsert()
