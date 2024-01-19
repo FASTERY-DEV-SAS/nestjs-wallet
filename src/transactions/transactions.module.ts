@@ -9,13 +9,7 @@ import { WalletsModule } from 'src/wallets/wallets.module';
 @Module({
   controllers: [TransactionsController],
   providers: [TransactionsService],
-  imports: [
-    WalletsModule,
-    AuthModule, 
-    TypeOrmModule.forFeature([
-      Transaction
-    ])
-  ],
-  exports: [TransactionsService,TypeOrmModule]
+  imports: [WalletsModule, AuthModule, TypeOrmModule.forFeature([Transaction])],
+  exports: [TransactionsService, TypeOrmModule],
 })
 export class TransactionsModule {}

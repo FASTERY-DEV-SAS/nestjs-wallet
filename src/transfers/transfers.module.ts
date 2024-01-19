@@ -12,10 +12,8 @@ import { TransactionsModule } from 'src/transactions/transactions.module';
   imports: [
     WalletsModule,
     TransactionsModule,
-    TypeOrmModule.forFeature([
-      Transfer
-    ])
+    TypeOrmModule.forFeature([Transfer]),
   ],
-  exports: [TransfersService,TypeOrmModule]
+  exports: [TransfersService, TypeOrmModule],
 })
 export class TransfersModule {}

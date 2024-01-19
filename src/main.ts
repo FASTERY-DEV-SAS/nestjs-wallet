@@ -7,14 +7,16 @@ async function bootstrap() {
   const logger = new Logger('Consola');
 
   app.setGlobalPrefix(process.env.API_PREFIX);
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    // transform: true,
-    // transformOptions:{
-    //   enableImplicitConversion: true
-    // }
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      // transform: true,
+      // transformOptions:{
+      //   enableImplicitConversion: true
+      // }
+    }),
+  );
   await app.listen(process.env.PORT);
   logger.log(`Application is running on: ${await app.getUrl()}`);
 }

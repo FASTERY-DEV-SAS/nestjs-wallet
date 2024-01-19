@@ -8,7 +8,6 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TransfersModule } from './transfers/transfers.module';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -21,14 +20,14 @@ import { TransfersModule } from './transfers/transfers.module';
       password: process.env.DB_PASS,
       autoLoadEntities: true,
       synchronize: true,
-      ssl: true
+      ssl: true,
     }),
     CommonModule,
     FilesModule,
     AuthModule,
     TransactionsModule,
     WalletsModule,
-    TransfersModule
+    TransfersModule,
   ],
   controllers: [],
   providers: [],
