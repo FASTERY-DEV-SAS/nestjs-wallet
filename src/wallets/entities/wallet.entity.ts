@@ -1,25 +1,13 @@
 import { User } from "src/auth/entities/user.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({name: 'wallets'})
 export class Wallet {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'text', nullable: true })
-    holder_type: string;
-
     @Column({ type: 'text'})
     label_wallet: string;
-
-    @Column({ type: 'text', nullable: true })
-    holder_id: number | string;
-
-    @Column({ type: 'text', nullable: true })
-    name: string;
-
-    @Column({ type: 'text', nullable: true })
-    slug: string;
 
     @Column({ type: 'text', nullable: true })
     description: string;
@@ -33,11 +21,13 @@ export class Wallet {
     @Column({ type: 'int', default: 2 })
     decimal_places: number;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    created_at: Date;
+    @CreateDateColumn({
+    })
+    createDate: Date;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    updated_at: Date;
+    @UpdateDateColumn({
+    })
+    updateDate: Date;
 
     @ManyToOne(
         () => User, 

@@ -9,6 +9,7 @@ import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 
 @Controller('wallets')
 export class WalletsController {
+  
   constructor(private readonly walletsService: WalletsService) {}
 
   @Post()
@@ -18,7 +19,7 @@ export class WalletsController {
     @GetUser() user: User) {
     return this.walletsService.create(createWalletDto,user);
   }
-
+ 
   @Get()
   findAll() {
     return this.walletsService.findAll();

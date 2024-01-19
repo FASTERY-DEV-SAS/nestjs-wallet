@@ -1,5 +1,5 @@
 import { Wallet } from "src/wallets/entities/wallet.entity";
-import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, CreateDateColumn, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('users')
 export class User {
@@ -9,6 +9,9 @@ export class User {
 
     @Column({ unique: true })
     email: string;
+
+    @Column('text',{default: ''})
+    fullName: string;
 
     @Column({ unique: true })
     id_user: string;
@@ -26,6 +29,14 @@ export class User {
 
     @Column('text', { array: true, default: ['user'] })
     roles: string[];
+
+    @CreateDateColumn({
+    })
+    createDate: Date;
+
+    @UpdateDateColumn({
+    })
+    updateDate: Date;
 
 
     @OneToMany(

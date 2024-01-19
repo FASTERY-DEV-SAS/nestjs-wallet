@@ -6,6 +6,7 @@ import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { WalletsModule } from './wallets/wallets.module';
+import { TransfersModule } from './transfers/transfers.module';
 
 
 @Module({
@@ -26,7 +27,8 @@ import { WalletsModule } from './wallets/wallets.module';
     FilesModule,
     AuthModule,
     TransactionsModule,
-    WalletsModule
+    WalletsModule,
+    TransfersModule
   ],
   controllers: [],
   providers: [],

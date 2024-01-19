@@ -9,10 +9,11 @@ import { AuthModule } from 'src/auth/auth.module';
   controllers: [WalletsController],
   providers: [WalletsService],
   imports: [
-    AuthModule,
+    AuthModule, 
     TypeOrmModule.forFeature([
       Wallet
     ])
   ],
+  exports: [WalletsService,TypeOrmModule]
 })
 export class WalletsModule {}

@@ -18,6 +18,7 @@ export class AuthService {
   ) { }
 
   async create(createUserDto: CreateUserDto) {
+    // TODO: VERIFICAR ID O RUC
     try {
       const { password, ...userData } = createUserDto;
       const user = this.userRepository.create({
