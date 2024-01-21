@@ -19,7 +19,7 @@ import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
-  @Post()
+  @Post('create')
   @Auth(ValidRoles.user)
   create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
     return this.walletsService.create(createWalletDto, user);

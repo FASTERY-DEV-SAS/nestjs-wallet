@@ -23,7 +23,32 @@ export class WalletsService {
       const wallet = await this.walletRepository.save(newwallet);
 
       return { ...wallet };
-    } catch (error) {}
+    } catch (error) {} 
+  }
+  // TODO: Crear un queryRunner para hacer la transacción
+  // TODO:VALIDAR QUE SEA ParseUUIDPipe
+  async updateWalletBalance(walletId: string): Promise<void> {
+    const wallet = await this.walletRepository.findOneOrFail({
+      where: { id: walletId },
+      relations: ['transactions'],
+    });
+
+    // Filtrar solo transacciones confirmadas y relacionadas con esta billetera
+    const relevantTransactions = wallet.transactions.filter(
+      (transaction) => transaction.confirmed,
+    );
+    // BUG: PROBLEMA DE RECALCULO DE SALDO
+    // Calcular el nuevo saldo sumando o restando según el tipo de transacción
+    wallet.balance = relevantTransactions.reduce((total, transaction) => {
+      return (
+        total +
+        (transaction.type === 'deposit'
+          ? +transaction.amount
+          : +transaction.amount)
+      );
+    }, 0);
+    // Guardar el nuevo saldo en la base de datos
+    await this.walletRepository.save(wallet);
   }
 
   findAll() {

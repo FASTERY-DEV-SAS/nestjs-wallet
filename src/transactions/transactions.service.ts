@@ -9,20 +9,34 @@ import { Wallet } from 'src/wallets/entities/wallet.entity';
 
 @Injectable()
 export class TransactionsService {
-  constructor(
+  constructor( 
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
 
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
 
+
     private readonly dataSource: DataSource,
   ) {}
 
   async create(createTransactionDto: CreateTransactionDto, user: User) {
-    const transaction = this.transactionRepository.create(createTransactionDto);
-    const newtransaction = await this.transactionRepository.save(transaction);
-    return newtransaction;
+    return `This action returns create transactions`;
+  }
+
+  async createTransaction(
+    walletId: string,
+    amount: number,
+  ): Promise<Transaction> {
+    const transaction = new Transaction();
+    transaction.wallet = await this.walletRepository.findOneOrFail({
+      where: { id: walletId },
+      relations: ['transactions'],
+    });
+    transaction.amount = amount;
+    transaction.confirmed = true; // Puedes ajustar esto según tus necesidades
+    transaction.type = amount > 0 ? 'deposit' : 'withdraw'; // Puedes ajustar esto según tus necesidades
+    return transaction;
   }
 
   findAll() {

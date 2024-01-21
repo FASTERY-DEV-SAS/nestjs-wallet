@@ -21,14 +21,14 @@ export class Wallet {
   @Column({ type: 'text', nullable: true })
   description_wallet: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column('bool', { default: true })
+  isActive: boolean;
+
+  @Column({ type: 'jsonb', nullable: true, default: { currency: 'USD' } })
   meta: any | null;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'decimal', precision: 6, scale: 2, default: 0 })
   balance: number;
-
-  @Column({ type: 'int', default: 2 })
-  decimal_places: number;
 
   @CreateDateColumn({})
   createDate: Date;
