@@ -29,11 +29,11 @@ export class Transfer {
   @ManyToOne(() => User, (user) => user.receivedTransfers)
   toUser: User;
 
-  @Column({ type: 'text', nullable: true })
-  discount: string;
+  @ManyToOne(() => Transaction, (transaction) => transaction.revenueTransfers)
+  revenue: Transaction;
 
-  @Column({ type: 'text', nullable: true })
-  fee: string;
+  @ManyToOne(() => Transaction, (transaction) => transaction.feeTransfers)
+  fee: Transaction;
 
   @CreateDateColumn({})
   createDate: Date;

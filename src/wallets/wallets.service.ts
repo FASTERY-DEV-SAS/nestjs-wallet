@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +13,7 @@ export class WalletsService {
     private readonly walletRepository: Repository<Wallet>,
   ) {}
 
-  async create(createWalletDto: CreateWalletDto, user: User) {
+  async createWallet(createWalletDto: CreateWalletDto, user: User) {
     try {
       const { ...walletDetails } = createWalletDto;
       const newwallet = this.walletRepository.create({
@@ -51,19 +51,31 @@ export class WalletsService {
     await this.walletRepository.save(wallet);
   }
 
-  findAll() {
-    return `This action returns all wallets`;
+  // TODO: Errro code FIX
+  async validateAmountToTransfer(amount:number): Promise<boolean> {
+    const amountRegex = /^[1-9]\d*(\.\d{1,2})?$/;
+    if (!amountRegex.test(amount.toString())) {
+      throw new BadRequestException('Amount must be a number with two decimals');
+    }
+    return true;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} wallet`;
+  async getWalletAndTransactions(walletId:string): Promise<Wallet> {
+    return await this.walletRepository.findOneOrFail({
+      where: { id: walletId },
+      relations: ['transactions'],
+    });
   }
 
-  update(id: number, updateWalletDto: UpdateWalletDto) {
-    return `This action updates a #${id} wallet`;
+  async getWalletOne(walletId: string): Promise<Wallet> {
+    return this.walletRepository.findOne({ where: { id: walletId } });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} wallet`;
+  async containsBalance(wallet: Wallet, amount:number): Promise<boolean> {
+    if (wallet.balance < amount) {
+      throw new BadRequestException('Insufficient funds');
+    }
+    return true;
   }
+
 }

@@ -21,27 +21,27 @@ export class WalletsController {
 
   @Post('create')
   @Auth(ValidRoles.user)
-  create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
-    return this.walletsService.create(createWalletDto, user);
-  }
-
-  @Get()
-  findAll() {
-    return this.walletsService.findAll();
+  createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
+    return this.walletsService.createWallet(createWalletDto, user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.walletsService.findOne(+id);
+  getWalletOne(@Param('id') id: string) {
+    return this.walletsService.getWalletOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
-    return this.walletsService.update(+id, updateWalletDto);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.walletsService.findOne(+id);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.walletsService.remove(+id);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
+  //   return this.walletsService.update(+id, updateWalletDto);
+  // }
+
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.walletsService.remove(+id);
+  // }
 }

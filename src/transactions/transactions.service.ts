@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { User } from 'src/auth/entities/user.entity';
@@ -6,10 +6,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { DataSource, Repository } from 'typeorm';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
+import { WalletsService } from 'src/wallets/wallets.service';
 
 @Injectable()
 export class TransactionsService {
-  constructor( 
+  constructor(
+    @Inject(WalletsService)
+    private readonly walletsService: WalletsService,
+    
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
 
@@ -24,20 +28,18 @@ export class TransactionsService {
     return `This action returns create transactions`;
   }
 
-  async createTransaction(
+  async createNewTransaction(
     walletId: string,
     amount: number,
   ): Promise<Transaction> {
     const transaction = new Transaction();
-    transaction.wallet = await this.walletRepository.findOneOrFail({
-      where: { id: walletId },
-      relations: ['transactions'],
-    });
+    transaction.wallet = await this.walletsService.getWalletOne(walletId);
     transaction.amount = amount;
-    transaction.confirmed = true; // Puedes ajustar esto según tus necesidades
-    transaction.type = amount > 0 ? 'deposit' : 'withdraw'; // Puedes ajustar esto según tus necesidades
+    transaction.confirmed = true; 
+    transaction.type = amount > 0 ? 'deposit' : 'withdraw';
     return transaction;
   }
+  
 
   findAll() {
     return `This action returns all transactions`;
