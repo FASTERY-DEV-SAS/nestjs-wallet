@@ -63,6 +63,8 @@ $ npm run test:cov
 
 |            Name            | Response |
 |----------------------------|---------|
+| CreateWallet               |  619ms  |
+|                            |         |
 | Atomic:Blocks              | 0.00ms  |
 | Cart:EagerLoaderPay        | 0.00ms  |
 | Cart:Pay                   | 0.00ms  |
