@@ -76,7 +76,7 @@ $ npm run test:cov
 | Solo:EagerLoading          | 0.00ms  |
 | Solo:ForceWithdraw         | 0.00ms  |
 | Solo:GetBalance            | 0.00ms  |
-| Solo:Transfer              | 6.31ms  | Demo
+| Solo:Transfer              | 6.31ms  |
 | Solo:Withdraw              | 0.00ms  |
 | State:InTransaction        | 0.00ms  |
 | State:RefreshInTransaction | 0.00ms  |
