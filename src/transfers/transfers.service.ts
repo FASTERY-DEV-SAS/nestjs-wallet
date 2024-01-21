@@ -3,7 +3,6 @@ import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateTransferDto } from './dto/update-transfer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { Wallet } from 'src/wallets/entities/wallet.entity';
 import { Repository } from 'typeorm';
 import { Transfer } from './entities/transfer.entity';
 import { TransactionsService } from 'src/transactions/transactions.service';
@@ -22,76 +21,70 @@ export class TransfersService {
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
 
-    @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>,
-
     @InjectRepository(Transfer)
     private readonly transferRepository: Repository<Transfer>,
   ) {}
-
-  async transferMoney(
+  
+  async transferWalletToWallet(
     fromWalletId: string,
     toWalletId: string,
     amount: number,
+    fee: number,
+    revenue: number,
   ) {
-    const amountRegex = /^[1-9]\d*(\.\d{1,2})?$/;
-    if (!amountRegex.test(amount.toString())) {
-      return {
-        message:
-          'El monto debe ser un número mayor a 1 y con máximo 2 decimales.',
-        status: false,
-      };
-    }
-    // Obtener la billetera de origen y destino
-    const fromWallet = await this.walletRepository.findOneOrFail({
-      where: { id: fromWalletId },
-      relations: ['transactions'],
-    });
-    const toWallet = await this.walletRepository.findOneOrFail({
-      where: { id: toWalletId },
-      relations: ['transactions'],
-    });
+    await this.walletsService.validateAmountToTransfer(amount);
 
-    // Verificar si la billetera de origen tiene saldo suficiente
-    if (fromWallet.balance < amount) {
-      return {
-        message: 'Saldo insuficiente para realizar la transferencia',
-        status: false,
-      };
-    }
+    const fromWallet = await this.walletsService.getWalletOne(fromWalletId);
+
+    await this.walletsService.containsBalance(fromWallet,amount);
+
+    const toWallet = await this.walletsService.getWalletOne(toWalletId);
 
     // Iniciar una transacción
-    const queryRunner =
-      this.transactionRepository.manager.connection.createQueryRunner();
+    const queryRunner = this.transferRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       // Realizar la transacción de retiro
-      const withdrawTransaction = await this.transactionsService.createTransaction(
+      const withdrawTransaction = await this.transactionsService.createNewTransaction(
         fromWalletId,
         amount * -1,
       );
       await this.transactionRepository.save(withdrawTransaction);
 
       // Realizar la transacción de depósito
-      const depositTransaction = await this.transactionsService.createTransaction(
+      const depositTransaction = await this.transactionsService.createNewTransaction(
         toWalletId,
         amount,
       );
       await this.transactionRepository.save(depositTransaction);
 
+      const feeTransaction = await this.transactionsService.createNewTransaction(
+        fromWalletId,
+        fee* -1,
+      );
+      await this.transactionRepository.save(feeTransaction);
+
+      const revenueTransaction = await this.transactionsService.createNewTransaction(
+        fromWalletId,
+        revenue,
+      );
+      await this.transactionRepository.save(revenueTransaction);
+
+
       const transfer = this.transferRepository.create({
-        status: 'transfer', // Puedes ajustar esto según tus necesidades
+        status: 'transfer',
         deposit: depositTransaction,
         withdraw: withdrawTransaction,
-        fromUser: fromWallet.user, // Asume que hay una relación user en la entidad Wallet
-        toUser: toWallet.user, // Asume que hay una relación user en la entidad Wallet
-        discount: '0', // Puedes ajustar esto según tus necesidades
-        fee: '0', // Puedes ajustar esto según tus necesidades
+        fromUser: fromWallet.user,
+        toUser: toWallet.user,
+        revenue: revenueTransaction,
+        fee: feeTransaction,
       });
 
-      // Actualizar los saldos de las billeteras
+      // Actualizar los saldos de las billeteras 
+      // FIXME: Crear otro endpoint para actualizar el saldo de la billetera
       await this.walletsService.updateWalletBalance(fromWalletId);
       await this.walletsService.updateWalletBalance(toWalletId);
 
@@ -109,7 +102,6 @@ export class TransfersService {
       await queryRunner.release();
     }
   }
-
  
   create(createTransferDto: CreateTransferDto) {
     return 'This action adds a new transfer';

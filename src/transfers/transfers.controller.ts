@@ -20,19 +20,24 @@ export class TransfersController {
   ) {}
 
   @Post('transfer')
-  async transferMoney(
+  async transferWalletToWallet(
     @Body()
     transferData: {
       fromWalletId: string;
       toWalletId: string;
       amount: number;
+      fee: number;
+      discount: number;
+
     },
   ) {
-    const { fromWalletId, toWalletId, amount } = transferData;
-    return this.transfersService.transferMoney(
+    const { fromWalletId, toWalletId, amount,fee,discount } = transferData;
+    return this.transfersService.transferWalletToWallet(
       fromWalletId,
       toWalletId,
       amount,
+      fee,
+      discount
     );
   }
 
