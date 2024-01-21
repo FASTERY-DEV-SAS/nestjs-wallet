@@ -21,8 +21,8 @@ export class WalletsController {
 
   @Post('create')
   @Auth(ValidRoles.user)
-  create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
-    return this.walletsService.create(createWalletDto, user);
+  createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
+    return this.walletsService.createWallet(createWalletDto, user);
   }
 
   @Get()

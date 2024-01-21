@@ -13,7 +13,7 @@ export class WalletsService {
     private readonly walletRepository: Repository<Wallet>,
   ) {}
 
-  async create(createWalletDto: CreateWalletDto, user: User) {
+  async createWallet(createWalletDto: CreateWalletDto, user: User) {
     try {
       const { ...walletDetails } = createWalletDto;
       const newwallet = this.walletRepository.create({
