@@ -27,7 +27,7 @@ export class WalletsService {
   }
   // TODO: Crear un queryRunner para hacer la transacción
   // TODO:VALIDAR QUE SEA ParseUUIDPipe
-  async updateWalletBalance(walletId: string): Promise<void> {
+  async updateWalletBalance(walletId: string): Promise<Wallet> {
     const wallet = await this.walletRepository.findOneOrFail({
       where: { id: walletId },
       relations: ['transactions'],
@@ -49,6 +49,7 @@ export class WalletsService {
     }, 0);
     // Guardar el nuevo saldo en la base de datos
     await this.walletRepository.save(wallet);
+    return wallet;
   }
 
   // TODO: Errro code FIX
@@ -70,8 +71,43 @@ export class WalletsService {
   async getWalletOne(walletId: string): Promise<Wallet> {
     return this.walletRepository.findOne({ where: { id: walletId } });
   }
+  
+  // FIXME: PROBABLEMENTE LO QUITEMOS POR showWallets
+  async getWalletOneAuth(walletId: string, user: User): Promise<Wallet | object> {
+    if (user.roles.includes('admin') || user.isActive) {
+      const wallet = await this.walletRepository.findOne({ where: { id: walletId } });
+      if (wallet) {
+        return wallet;
+      } else {
+        return { message: 'La billetera no existe' , status: false};
+      }
+    } else {
+      const wallet = await this.walletRepository.findOne({
+        where: { id: walletId, user: { id: user.id } },
+      });
+  
+      if (wallet) {
+        return wallet;
+      } else {
+        return { message: 'La billetera no existe' , status: false};
+      }
+    }
+  }
+
+  async showWallets(user: User): Promise<Wallet[]> {
+    try {
+      // Retorna las billeteras asociadas al usuario actual sin incluir las transacciones
+      return await this.walletRepository.find({
+        where: { user: { id: user.id } },
+      });
+    } catch (error) {
+      // Maneja cualquier error que pueda ocurrir durante la recuperación
+      throw new Error('Error retrieving wallets');
+    }
+  }
 
   async containsBalance(wallet: Wallet, amount:number): Promise<boolean> {
+    await this.updateWalletBalance(wallet.id);
     if (wallet.balance < amount) {
       throw new BadRequestException('Insufficient funds');
     }

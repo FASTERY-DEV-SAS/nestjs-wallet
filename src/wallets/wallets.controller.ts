@@ -19,21 +19,28 @@ import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
-  @Post('create')
+  @Post('createWallet')
   @Auth(ValidRoles.user)
   createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
     return this.walletsService.createWallet(createWalletDto, user);
   }
 
-  @Get(':id')
-  getWalletOne(@Param('id') id: string) {
-    return this.walletsService.getWalletOne(id);
+  @Get('wallet/:id')
+  @Auth(ValidRoles.user, ValidRoles.admin)
+  getWalletOneAuth(@Param('id') id: string, @GetUser() user: User) {
+    return this.walletsService.getWalletOneAuth(id,user);
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.walletsService.findOne(+id);
-  // }
+  @Get('refreshBalance/:id')
+  updateWalletBalance(@Param('id') id: string) {
+    return this.walletsService.updateWalletBalance(id);
+  }
+
+  @Get('showWallets')
+  @Auth(ValidRoles.user)
+  showWallets(@GetUser() user: User) {
+    return this.walletsService.showWallets(user);
+  }
 
   // @Patch(':id')
   // update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
