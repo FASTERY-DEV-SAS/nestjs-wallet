@@ -60,27 +60,21 @@ $ npm run test:cov
 
 ### Performance Comparison
 
+|            Users           | Response |
+|----------------------------|----------|
+| Register                   |   483ms  |
+| Login                      |  1307ms  |
 
-|            Name            | Response |
-|----------------------------|---------|
-| CreateWallet               |  619ms  |
-|                            |         |
-| Atomic:Blocks              | 0.00ms  |
-| Cart:EagerLoaderPay        | 0.00ms  |
-| Cart:Pay                   | 0.00ms  |
-| Cart:PayFree               | 0.00ms  |
-| Cart:PayOneItemXPieces     | 0.00ms  |
-| Gift:Gift                  | 0.00ms  |
-| Gift:Refund                | 0.00ms  |
-| Solo:Deposit               | 0.00ms  |
-| Solo:EagerLoading          | 0.00ms  |
-| Solo:ForceWithdraw         | 0.00ms  |
-| Solo:GetBalance            | 0.00ms  |
-| Solo:Transfer              | 6.31ms  |
-| Solo:Withdraw              | 0.00ms  |
-| State:InTransaction        | 0.00ms  |
-| State:RefreshInTransaction | 0.00ms  |
-| State:TransactionRollback  | 0.00ms  |
+
+|            Wallets         | Response |
+|----------------------------|----------|
+| CreateWallet               |  1372ms  |
+| showWallets                |   306ms  |
+| refreshBalance/:id         |   2.15s  |
+
+
+
+
 
 #### Organizations
 

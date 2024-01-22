@@ -17,6 +17,9 @@ export class Transfer {
   @Column('text')
   status: string;
 
+  @Column({ type: 'jsonb', nullable: true })
+  meta: any | null;
+
   @ManyToOne(() => Transaction, (transaction) => transaction.depositTransfers)
   deposit: Transaction;
 

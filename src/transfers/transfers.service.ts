@@ -53,7 +53,6 @@ export class TransfersService {
       );
       await this.transactionRepository.save(withdrawTransaction);
 
-      // Realizar la transacción de depósito
       const depositTransaction = await this.transactionsService.createNewTransaction(
         toWalletId,
         amount,
@@ -85,8 +84,7 @@ export class TransfersService {
 
       // Actualizar los saldos de las billeteras 
       // FIXME: Crear otro endpoint para actualizar el saldo de la billetera
-      await this.walletsService.updateWalletBalance(fromWalletId);
-      await this.walletsService.updateWalletBalance(toWalletId);
+      console.log('transfer', transfer);
 
       await this.transferRepository.save(transfer);
 
@@ -101,6 +99,10 @@ export class TransfersService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async depositWallet(){
+    return 'depositWallet';
   }
  
   create(createTransferDto: CreateTransferDto) {
