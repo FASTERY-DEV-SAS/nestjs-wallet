@@ -61,26 +61,4 @@ export class TransfersController {
     return this.transfersService.createExpense(createExpenseDto,user);
   }
 
-  @Get()
-  findAll() {
-    return this.transfersService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.transfersService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateTransferDto: UpdateTransferDto,
-  ) {
-    return this.transfersService.update(+id, updateTransferDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.transfersService.remove(+id);
-  }
 }

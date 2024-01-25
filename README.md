@@ -57,6 +57,8 @@ $ npm run test:cov
 | createWallet               |  1372ms  |
 | showWallets                |   306ms  |
 | refreshBalance/:id         |   2.15s  |
+| createExpense              |   6.15s  |
+| createIncome               |   6.15s  |
 
 
 
