@@ -11,6 +11,12 @@ import { TransfersService } from './transfers.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateTransferDto } from './dto/update-transfer.dto';
 import { WalletsService } from 'src/wallets/wallets.service';
+import { Auth } from 'src/auth/decorators/auth.decorator';
+import { ValidRoles } from 'src/auth/interfaces/valid-roles';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/auth/entities/user.entity';
+import { CreateIncomeDto } from './dto/create-income.dto';
+import { CreateExpenseDto } from './dto/create-exprense.dto';
 
 @Controller('transfers')
 export class TransfersController {
@@ -41,9 +47,18 @@ export class TransfersController {
     );
   }
 
-  @Post()
-  create(@Body() createTransferDto: CreateTransferDto) {
-    return this.transfersService.create(createTransferDto);
+  @Post('createIncome')
+  @Auth(ValidRoles.user)
+  createIncome(@Body()
+  createIncomeDto: CreateIncomeDto, @GetUser() user: User) {
+    return this.transfersService.createIncome(createIncomeDto,user);
+  }
+  
+  @Post('createExpense')
+  @Auth(ValidRoles.user)
+  createExpense(@Body()
+  createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
+    return this.transfersService.createExpense(createExpenseDto,user);
   }
 
   @Get()

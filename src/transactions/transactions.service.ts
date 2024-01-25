@@ -31,12 +31,27 @@ export class TransactionsService {
   async createNewTransaction(
     walletId: string,
     amount: number,
+    meta: any
   ): Promise<Transaction> {
     const transaction = new Transaction();
     transaction.wallet = await this.walletsService.getWalletOne(walletId);
     transaction.amount = amount;
     transaction.confirmed = true; 
     transaction.type = amount > 0 ? 'deposit' : 'withdraw';
+    transaction.meta = meta;
+    return transaction;
+  }
+
+  async createNewDepositTransaction(
+    walletIdSelected: string,
+    amount: number,
+  ): Promise<Transaction> {
+    const transaction = new Transaction();
+    // TODO: OPTIMIZAR CONSULTA A LA WALLET
+    transaction.wallet = await this.walletsService.getWalletOne(walletIdSelected);
+    transaction.amount = amount;
+    transaction.confirmed = true; 
+    transaction.type = 'deposit';
     return transaction;
   }
   
