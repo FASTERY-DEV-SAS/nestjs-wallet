@@ -53,7 +53,7 @@ export class WalletsService {
   }
 
   // TODO: Errro code FIX
-  async validateAmountToTransfer(amount:number): Promise<boolean> {
+  async validateAmount(amount:number): Promise<boolean> {
     const amountRegex = /^[1-9]\d*(\.\d{1,2})?$/;
     if (!amountRegex.test(amount.toString())) {
       throw new BadRequestException('Amount must be a number with two decimals');
@@ -69,7 +69,7 @@ export class WalletsService {
   }
 
   async getWalletOne(walletId: string): Promise<Wallet> {
-    return this.walletRepository.findOne({ where: { id: walletId } });
+    return await this.walletRepository.findOne({ where: { id: walletId } });
   }
   
   // FIXME: PROBABLEMENTE LO QUITEMOS POR showWallets
@@ -112,6 +112,31 @@ export class WalletsService {
       throw new BadRequestException('Insufficient funds');
     }
     return true;
+  }
+
+  async walletIdExistsInUser(walletId: string, user: User): Promise<boolean> {
+    try {
+      const wallet = await this.getWalletOne(walletId);
+      if (wallet.user.id === user.id) {
+        return true;
+      } else {
+        throw new BadRequestException('Wallet does not exist');
+      }
+    } catch (error) {
+      throw new BadRequestException('Wallet does not exist');
+    }
+  }
+  async canWithdraw(walletId: string, amount: number): Promise<boolean> {
+    try {
+      const wallet = await this.getWalletOne(walletId);
+      if (wallet.balance >= amount) {
+        return true;
+      } else {
+        throw new BadRequestException('Insufficient funds in the wallet');
+      }
+    } catch (error) {
+      throw new BadRequestException('Wallet not found');
+    }
   }
 
 }

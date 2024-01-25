@@ -36,7 +36,7 @@ export class Wallet {
   @UpdateDateColumn({})
   updateDate: Date;
 
-  @ManyToOne(() => User, (user) => user.wallet)
+  @ManyToOne(() => User, (user) => user.wallet, { eager: true })
   user: User;
 
   @OneToMany(() => Transaction, (transaction) => transaction.wallet)
