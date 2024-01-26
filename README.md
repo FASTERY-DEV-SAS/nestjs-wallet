@@ -55,7 +55,7 @@ $ npm run test:cov
 |            Wallets         | Response |
 |----------------------------|----------|
 | createWallet               |  1372ms  |
-| showWallets                |   306ms  |
+| showWallets ✔️             |  1121ms  |
 | refreshBalance/:id         |   2.15s  |
 | createExpense              |   6.15s  |
 | createIncome               |   6.15s  |
