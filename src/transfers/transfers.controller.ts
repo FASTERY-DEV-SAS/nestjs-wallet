@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TransfersService } from './transfers.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
@@ -17,6 +18,7 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 
 @Controller('transfers')
 export class TransfersController {
@@ -61,26 +63,10 @@ export class TransfersController {
     return this.transfersService.createExpense(createExpenseDto,user);
   }
 
-  @Get()
-  findAll() {
-    return this.transfersService.findAll();
+  @Get('allTransfers')
+  @Auth(ValidRoles.user)
+  allTransfers(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
+    return this.transfersService.allTransfers(user,paginationDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.transfersService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateTransferDto: UpdateTransferDto,
-  ) {
-    return this.transfersService.update(+id, updateTransferDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.transfersService.remove(+id);
-  }
 }

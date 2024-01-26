@@ -10,6 +10,7 @@ import { WalletsService } from 'src/wallets/wallets.service';
 import { User } from 'src/auth/entities/user.entity';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
 
 @Injectable()
 export class TransfersService {
@@ -242,21 +243,27 @@ export class TransfersService {
     }
   }
 
+  async allTransfers(user: User,paginationDto: PaginationDto) {
+    try {
+      const transfers = await this.transferRepository
+      .createQueryBuilder('transfers')
+      .leftJoinAndSelect('transfers.fromUser', 'fromUser')
+      .leftJoinAndSelect('transfers.toUser', 'toUser')
+      .leftJoinAndSelect('transfers.deposit', 'deposit')
+      .leftJoinAndSelect('transfers.withdraw', 'withdraw')
+      .leftJoinAndSelect('transfers.revenue', 'revenue')
+      .leftJoinAndSelect('transfers.fee', 'fee')
+      .where('fromUser.id = :userId', { userId: user.id })
+      .orWhere('toUser.id = :userId', { userId: user.id })
+      .skip(paginationDto.offset || 0)
+      .take(paginationDto.limit || 10) 
+      .getMany();
   
-
-  findAll() {
-    return `This action returns all transfers`;
+      return transfers;
+    } catch (error) {
+      console.error('Error al obtener transferencias:', error);
+      return [];
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} transfer`;
-  }
-
-  update(id: number, updateTransferDto: UpdateTransferDto) {
-    return `This action updates a #${id} transfer`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} transfer`;
-  }
 }
