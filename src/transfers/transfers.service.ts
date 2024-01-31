@@ -11,6 +11,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { retry } from 'rxjs';
 
 @Injectable()
 export class TransfersService {
@@ -84,8 +85,8 @@ export class TransfersService {
         status: 'transfer',
         deposit: depositTransaction,
         withdraw: withdrawTransaction,
-        fromUser: fromWallet.user,
-        toUser: toWallet.user,
+        fromWallet: fromWallet,
+        toWallet: toWallet,
         revenue: revenueTransaction,
         fee: feeTransaction,
       });
@@ -109,12 +110,13 @@ export class TransfersService {
     }
   }
 
-  async createIncome(createIncomeDto: CreateIncomeDto,user:User) {
+  async createIncome(createIncomeDto: CreateIncomeDto, user:User) {
 
     await this.walletsService.walletIdExistsInUser(createIncomeDto.walletIdSelected,user);
 
     await this.walletsService.validateAmount(createIncomeDto.amount);
 
+    const fromWallet = await this.walletsService.getWalletOne(createIncomeDto.walletIdSelected);
     // Iniciar una transacción
     const queryRunner = this.transferRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
@@ -154,11 +156,12 @@ export class TransfersService {
         status: 'incomes',
         deposit: depositTransaction,
         withdraw: withdrawTransaction,
-        fromUser: user,
-        toUser: user,
+        fromWallet: fromWallet,
+        toWallet: fromWallet,
         revenue: revenueTransaction,
         fee: feeTransaction,
       });
+      console.log('transfer', transfer);
 
       await this.transferRepository.save(transfer);
 
@@ -222,8 +225,8 @@ export class TransfersService {
         status: 'expenses',
         deposit: depositTransaction,
         withdraw: withdrawTransaction,
-        fromUser: user,
-        toUser: user,
+        fromWallet: user.wallet,
+        toWallet: user.wallet,
         revenue: revenueTransaction,
         fee: feeTransaction,
       });
@@ -247,16 +250,15 @@ export class TransfersService {
     try {
       const transfers = await this.transferRepository
       .createQueryBuilder('transfers')
-      .leftJoinAndSelect('transfers.fromUser', 'fromUser')
-      .leftJoinAndSelect('transfers.toUser', 'toUser')
+      .leftJoinAndSelect('transfers.fromWallet', 'fromWallet')
+      .leftJoinAndSelect('transfers.toWallet', 'toWallet')
       .leftJoinAndSelect('transfers.deposit', 'deposit')
       .leftJoinAndSelect('transfers.withdraw', 'withdraw')
       .leftJoinAndSelect('transfers.revenue', 'revenue')
       .leftJoinAndSelect('transfers.fee', 'fee')
-      .where('fromUser.id = :userId', { userId: user.id })
-      .orWhere('toUser.id = :userId', { userId: user.id })
+      .orderBy('transfers.createDate', 'DESC') // Ordenar por fecha de creación descendente
       .skip(paginationDto.offset || 0)
-      .take(paginationDto.limit || 10) 
+      .take(paginationDto.limit || 10)
       .getMany();
   
       return transfers;

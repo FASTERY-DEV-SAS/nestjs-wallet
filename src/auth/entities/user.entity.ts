@@ -53,12 +53,6 @@ export class User {
   @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions: Transaction[];
 
-  @OneToMany(() => Transfer, (transfer) => transfer.fromUser)
-  sentTransfers: Transfer[];
-
-  @OneToMany(() => Transfer, (transfer) => transfer.toUser)
-  receivedTransfers: Transfer[];
-
   @BeforeInsert()
   checkEmailInsert() {
     this.email = this.email.toLowerCase().trim();

@@ -1,5 +1,6 @@
 import { User } from 'src/auth/entities/user.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { Wallet } from 'src/wallets/entities/wallet.entity';
 import {
   Column,
   CreateDateColumn,
@@ -26,11 +27,11 @@ export class Transfer {
   @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers)
   withdraw: Transaction;
 
-  @ManyToOne(() => User, (user) => user.sentTransfers)
-  fromUser: User;
+  @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers)
+  fromWallet: Wallet;
 
-  @ManyToOne(() => User, (user) => user.receivedTransfers)
-  toUser: User;
+  @ManyToOne(() => Wallet, (wallet) => wallet.receivedTransfers)
+  toWallet: Wallet;
 
   @ManyToOne(() => Transaction, (transaction) => transaction.revenueTransfers)
   revenue: Transaction;

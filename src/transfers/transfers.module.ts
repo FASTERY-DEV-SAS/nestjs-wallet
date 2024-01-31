@@ -6,6 +6,7 @@ import { Transfer } from './entities/transfer.entity';
 import { WalletsModule } from 'src/wallets/wallets.module';
 import { TransactionsModule } from 'src/transactions/transactions.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { Category } from './entities/category.entity';
 
 @Module({
   controllers: [TransfersController],
@@ -14,7 +15,7 @@ import { AuthModule } from 'src/auth/auth.module';
     AuthModule,
     WalletsModule,
     TransactionsModule,
-    TypeOrmModule.forFeature([Transfer]),
+    TypeOrmModule.forFeature([Transfer,Category]),
   ],
   exports: [TransfersService, TypeOrmModule],
 })

@@ -1,5 +1,6 @@
 import { User } from 'src/auth/entities/user.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
+import { Transfer } from 'src/transfers/entities/transfer.entity';
 import {
   Column,
   CreateDateColumn,
@@ -36,9 +37,18 @@ export class Wallet {
   @UpdateDateColumn({})
   updateDate: Date;
 
+  @Column({ type: 'text', nullable: true})
+  type: string;
+
   @ManyToOne(() => User, (user) => user.wallet, { eager: true })
   user: User;
 
   @OneToMany(() => Transaction, (transaction) => transaction.wallet)
   transactions: Transaction[];
+  
+  @OneToMany(() => Transfer, (transfer) => transfer.fromWallet)
+  sentTransfers: Transfer[];
+
+  @OneToMany(() => Transfer, (transfer) => transfer.toWallet)
+  receivedTransfers: Transfer[];
 }
