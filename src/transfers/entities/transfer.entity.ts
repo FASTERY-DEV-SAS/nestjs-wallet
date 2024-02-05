@@ -1,4 +1,5 @@
 import { User } from 'src/auth/entities/user.entity';
+import { Category } from 'src/categories/entities/category.entity';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
 import {
@@ -21,26 +22,37 @@ export class Transfer {
   @Column({ type: 'jsonb', nullable: true })
   meta: any | null;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.depositTransfers)
-  deposit: Transaction;
+  @Column({ type: 'decimal', precision: 6, scale: 2, default: 0 })
+  previous_balance: number;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers)
-  withdraw: Transaction;
-
-  @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers)
+  @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers, { eager: true })
   fromWallet: Wallet;
 
-  @ManyToOne(() => Wallet, (wallet) => wallet.receivedTransfers)
+  @ManyToOne(() => Wallet, (wallet) => wallet.receivedTransfers, { eager: true , nullable: true})
   toWallet: Wallet;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.revenueTransfers)
+  @ManyToOne(() => Transaction, (transaction) => transaction.depositTransfers, { eager: true })
+  deposit: Transaction;
+
+  @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers , { eager: true })
+  withdraw: Transaction;
+
+  @ManyToOne(() => Transaction, (transaction) => transaction.revenueTransfers , { eager: true })
   revenue: Transaction;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.feeTransfers)
+  @ManyToOne(() => Transaction, (transaction) => transaction.feeTransfers , { eager: true })
   fee: Transaction;
+
+  @ManyToOne(() => Category, (category) => category.categoryTransfers)
+  category:Category;
 
   @CreateDateColumn({})
   createDate: Date;
+  
+  // @Column({ type: 'date' })
+  // FIXME: QUE SE PUEDA EDITAR ESTA FECHA Y FECHA DE CREACION
+  @CreateDateColumn({})
+  operationDate: Date;
 
   @UpdateDateColumn({})
   updateDate: Date;

@@ -15,35 +15,31 @@ import { retry } from 'rxjs';
 
 @Injectable()
 export class TransfersService {
-  
+
   constructor(
     @Inject(TransactionsService)
     private readonly transactionsService: TransactionsService,
 
     @Inject(WalletsService)
     private readonly walletsService: WalletsService,
-    
+
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
 
     @InjectRepository(Transfer)
     private readonly transferRepository: Repository<Transfer>,
-  ) {}
-  
+  ) { }
+
   async transferWalletToWallet(
-    fromWalletId: string,
-    toWalletId: string,
-    amount: number,
-    fee: number,
-    revenue: number,
+    createTransferDto: CreateTransferDto, user: User
   ) {
-    await this.walletsService.validateAmount(amount);
+    await this.walletsService.validateAmount(createTransferDto.amount);
 
-    const fromWallet = await this.walletsService.getWalletOne(fromWalletId);
+    const fromWallet = await this.walletsService.getWalletOne(createTransferDto.fromWalletId);
 
-    await this.walletsService.containsBalance(fromWallet,amount);
+    await this.walletsService.containsBalance(fromWallet, createTransferDto.amount);
 
-    const toWallet = await this.walletsService.getWalletOne(toWalletId);
+    const toWallet = await this.walletsService.getWalletOne(createTransferDto.toWalletId);
 
     // Iniciar una transacción
     const queryRunner = this.transferRepository.manager.connection.createQueryRunner();
@@ -52,34 +48,46 @@ export class TransfersService {
 
     try {
       // Realizar la transacción de retiro
+      // FIX: USAR new Transaction();
+      // const withdrawTransaction = await this.transactionsService.createNewTransaction(
+      //   createTransferDto.fromWalletId,
+      //   createTransferDto.amount * -1,
+      //   "withdrawTransaction",
+      //   "withdraw",
+      // );
       const withdrawTransaction = await this.transactionsService.createNewTransaction(
-        fromWalletId,
-        amount * -1,
-        "withdrawTransaction"
+        createTransferDto.fromWalletId,
+        createTransferDto.amount * -1,
+        "withdrawTransaction",
+        "withdraw",
       );
       await this.transactionRepository.save(withdrawTransaction);
 
       const depositTransaction = await this.transactionsService.createNewTransaction(
-        toWalletId,
-        amount,
-        "depositTransaction"
+        createTransferDto.toWalletId,
+        createTransferDto.amount,
+        "depositTransaction",
+        "deposit"
       );
       await this.transactionRepository.save(depositTransaction);
 
       const feeTransaction = await this.transactionsService.createNewTransaction(
-        fromWalletId,
-        fee* -1,
-        "feeTransaction"
+        createTransferDto.fromWalletId,
+        createTransferDto.fee * -1,
+        "feeTransaction",
+        "fee"
       );
       await this.transactionRepository.save(feeTransaction);
 
       const revenueTransaction = await this.transactionsService.createNewTransaction(
-        fromWalletId,
-        revenue,
-        "revenueTransaction"
+        createTransferDto.fromWalletId,
+        createTransferDto.revenue,
+        "revenueTransaction",
+        "revenue"
       );
       await this.transactionRepository.save(revenueTransaction);
-
+      
+      // const previousBalance = +fromWallet.balance - +createTransferDto.amount;
 
       const transfer = this.transferRepository.create({
         status: 'transfer',
@@ -89,11 +97,11 @@ export class TransfersService {
         toWallet: toWallet,
         revenue: revenueTransaction,
         fee: feeTransaction,
+        // previous_balance: previousBalance
       });
 
       // Actualizar los saldos de las billeteras 
       // FIXME: Crear otro endpoint para actualizar el saldo de la billetera
-      console.log('transfer', transfer);
 
       await this.transferRepository.save(transfer);
 
@@ -110,9 +118,9 @@ export class TransfersService {
     }
   }
 
-  async createIncome(createIncomeDto: CreateIncomeDto, user:User) {
+  async createIncome(createIncomeDto: CreateIncomeDto, user: User) {
 
-    await this.walletsService.walletIdExistsInUser(createIncomeDto.walletIdSelected,user);
+    await this.walletsService.walletIdExistsInUser(createIncomeDto.walletIdSelected, user);
 
     await this.walletsService.validateAmount(createIncomeDto.amount);
 
@@ -122,46 +130,56 @@ export class TransfersService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-   try {
+    try {
       // Realizar la transacción de retiro
       const withdrawTransaction = await this.transactionsService.createNewTransaction(
         createIncomeDto.walletIdSelected,
         0,
-        "withdrawTransaction"
+        "withdrawTransaction",
+        "withdraw"
       );
       await this.transactionRepository.save(withdrawTransaction);
 
       const depositTransaction = await this.transactionsService.createNewTransaction(
         createIncomeDto.walletIdSelected,
         createIncomeDto.amount,
-        createIncomeDto.meta
+        createIncomeDto.meta,
+        "deposit"
       );
       await this.transactionRepository.save(depositTransaction);
 
       const feeTransaction = await this.transactionsService.createNewTransaction(
         createIncomeDto.walletIdSelected,
-        createIncomeDto.fee* -1,
-        "feeTransaction"
+        createIncomeDto.fee * -1,
+        "feeTransaction",
+        "fee"
       );
       await this.transactionRepository.save(feeTransaction);
 
       const revenueTransaction = await this.transactionsService.createNewTransaction(
         createIncomeDto.walletIdSelected,
         0,
-        "revenueTransaction"
+        "revenueTransaction",
+        "revenue"
       );
       await this.transactionRepository.save(revenueTransaction);
+
+      console.log(fromWallet.balance
+        , createIncomeDto.amount);
+        
+      const previousBalance = +fromWallet.balance + +createIncomeDto.amount;
 
       const transfer = this.transferRepository.create({
         status: 'incomes',
         deposit: depositTransaction,
         withdraw: withdrawTransaction,
         fromWallet: fromWallet,
-        toWallet: fromWallet,
+        toWallet: null,
         revenue: revenueTransaction,
         fee: feeTransaction,
+        category: { id: createIncomeDto.categoryIdSelected },
+        previous_balance: previousBalance
       });
-      console.log('transfer', transfer);
 
       await this.transferRepository.save(transfer);
 
@@ -178,57 +196,67 @@ export class TransfersService {
     }
   }
 
-  async createExpense(createExpenseDto: CreateExpenseDto,user:User) {
+  async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
 
-    await this.walletsService.walletIdExistsInUser(createExpenseDto.walletIdSelected,user);
-    
+    await this.walletsService.walletIdExistsInUser(createExpenseDto.walletIdSelected, user);
+
+    const fromWallet = await this.walletsService.getWalletOne(createExpenseDto.walletIdSelected);
+
     await this.walletsService.validateAmount(createExpenseDto.amount);
 
-    await this.walletsService.canWithdraw(createExpenseDto.walletIdSelected,createExpenseDto.amount);
+    await this.walletsService.canWithdraw(createExpenseDto.walletIdSelected, createExpenseDto.amount);
 
     // Iniciar una transacción
     const queryRunner = this.transferRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-   try {
+    try {
       // Realizar la transacción de retiro
       const withdrawTransaction = await this.transactionsService.createNewTransaction(
         createExpenseDto.walletIdSelected,
-        createExpenseDto.amount*-1,
-        "withdrawTransaction"
+        createExpenseDto.amount * -1,
+        "withdrawTransaction",
+        "withdraw"
       );
       await this.transactionRepository.save(withdrawTransaction);
 
       const depositTransaction = await this.transactionsService.createNewTransaction(
         createExpenseDto.walletIdSelected,
         0,
-        "depositTransaction"
+        "depositTransaction",
+        "deposit"
       );
       await this.transactionRepository.save(depositTransaction);
 
       const feeTransaction = await this.transactionsService.createNewTransaction(
         createExpenseDto.walletIdSelected,
-        createExpenseDto.fee* -1,
-        "feeTransaction"
+        createExpenseDto.fee * -1,
+        "feeTransaction",
+        "fee"
       );
       await this.transactionRepository.save(feeTransaction);
 
       const revenueTransaction = await this.transactionsService.createNewTransaction(
         createExpenseDto.walletIdSelected,
         0,
-        "revenueTransaction"
+        "revenueTransaction",
+        "revenue"
       );
       await this.transactionRepository.save(revenueTransaction);
+
+      const previousBalance = +fromWallet.balance - +createExpenseDto.amount;
 
       const transfer = this.transferRepository.create({
         status: 'expenses',
         deposit: depositTransaction,
         withdraw: withdrawTransaction,
-        fromWallet: user.wallet,
-        toWallet: user.wallet,
+        fromWallet: fromWallet,
+        toWallet: fromWallet,
         revenue: revenueTransaction,
         fee: feeTransaction,
+        category: { id: createExpenseDto.categoryIdSelected },
+        previous_balance: previousBalance
       });
 
       await this.transferRepository.save(transfer);
@@ -246,26 +274,54 @@ export class TransfersService {
     }
   }
 
-  async allTransfers(user: User,paginationDto: PaginationDto) {
+  async allTransfers(user: User, paginationDto: PaginationDto) {
     try {
+      const month = parseInt(paginationDto.month, 10);
+      const year = parseInt(paginationDto.year, 10);
+
+      if (isNaN(month) || isNaN(year)) {
+        throw new Error('Mes o año no válidos');
+      }
+
       const transfers = await this.transferRepository
-      .createQueryBuilder('transfers')
-      .leftJoinAndSelect('transfers.fromWallet', 'fromWallet')
-      .leftJoinAndSelect('transfers.toWallet', 'toWallet')
-      .leftJoinAndSelect('transfers.deposit', 'deposit')
-      .leftJoinAndSelect('transfers.withdraw', 'withdraw')
-      .leftJoinAndSelect('transfers.revenue', 'revenue')
-      .leftJoinAndSelect('transfers.fee', 'fee')
-      .orderBy('transfers.createDate', 'DESC') // Ordenar por fecha de creación descendente
-      .skip(paginationDto.offset || 0)
-      .take(paginationDto.limit || 10)
-      .getMany();
-  
+        .createQueryBuilder('transfers')
+        .leftJoinAndSelect('transfers.fromWallet', 'fromWallet')
+        .leftJoinAndSelect('transfers.toWallet', 'toWallet')
+        .leftJoinAndSelect('transfers.deposit', 'deposit')
+        .leftJoinAndSelect('transfers.withdraw', 'withdraw')
+        .leftJoinAndSelect('transfers.revenue', 'revenue')
+        .leftJoinAndSelect('transfers.fee', 'fee')
+        .leftJoinAndSelect('transfers.category', 'category')
+        .where('fromWallet.user = :userId', { userId: user.id })
+        .andWhere('EXTRACT(MONTH FROM transfers.operationDate) = :month', { month })
+        .andWhere('EXTRACT(YEAR FROM transfers.operationDate) = :year', { year })
+        .orderBy('transfers.operationDate', 'DESC')
+        .skip(paginationDto.offset || 0)
+        .take(paginationDto.limit || 10)
+        .getMany();
+
+      if (transfers.length === 0) {
+        return [];
+      }
+
       return transfers;
     } catch (error) {
-      console.error('Error al obtener transferencias:', error);
-      return [];
+      console.error('Error al obtener transferencias:', error.message);
+      throw new Error('Error al obtener transferencias');
+    } finally {
+      // Puedes realizar acciones de limpieza o manejo de recursos aquí si es necesario
     }
+  }
+
+  async findOne(id: string) {
+    try {
+      const transfer = await this.transferRepository.findOne({ where: { id } });
+      return transfer;
+    } catch (error) {
+      console.error('Error al obtener transferencia:', error);
+      return {};
+    }
+
   }
 
 }

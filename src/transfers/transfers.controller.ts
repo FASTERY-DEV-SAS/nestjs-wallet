@@ -28,25 +28,9 @@ export class TransfersController {
   ) {}
 
   @Post('transfer')
-  async transferWalletToWallet(
-    @Body()
-    transferData: {
-      fromWalletId: string;
-      toWalletId: string;
-      amount: number;
-      fee: number;
-      discount: number;
-
-    },
-  ) {
-    const { fromWalletId, toWalletId, amount,fee,discount } = transferData;
-    return this.transfersService.transferWalletToWallet(
-      fromWalletId,
-      toWalletId,
-      amount,
-      fee,
-      discount
-    );
+  @Auth(ValidRoles.user)
+  transferWalletToWallet(@Body() createTransferDto: CreateTransferDto, @GetUser() user: User) {
+    return this.transfersService.transferWalletToWallet(createTransferDto,user);
   }
 
   @Post('createIncome')
@@ -67,6 +51,12 @@ export class TransfersController {
   @Auth(ValidRoles.user)
   allTransfers(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
     return this.transfersService.allTransfers(user,paginationDto);
+  }
+
+  @Get(':id')
+  // @Auth(ValidRoles.user)
+  findOne(@Param('id') id: string) {
+    return this.transfersService.findOne(id);
   }
 
 }

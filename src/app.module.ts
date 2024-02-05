@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TransfersModule } from './transfers/transfers.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TransfersModule } from './transfers/transfers.module';
     TransactionsModule,
     WalletsModule,
     TransfersModule,
+    CategoriesModule,
   ],
   controllers: [],
   providers: [],

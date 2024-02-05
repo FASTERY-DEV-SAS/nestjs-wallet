@@ -1,20 +1,18 @@
-import { User } from 'src/auth/entities/user.entity';
 import { Transfer } from 'src/transfers/entities/transfer.entity';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
-  ManyToMany,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity({ name: 'transactions' })
 export class Transaction {
+  
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -39,9 +37,6 @@ export class Transaction {
   @Column('text')
   type: string;
 
-  @ManyToOne(() => User, (user) => user.transactions)
-  user: User;
-
   @OneToMany(() => Transfer, (transfer) => transfer.deposit)
   depositTransfers: Transfer[];
 
@@ -53,6 +48,4 @@ export class Transaction {
 
   @OneToMany(() => Transfer, (transfer) => transfer.fee)
   feeTransfers: Transfer[];
-
-
 }

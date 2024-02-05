@@ -1,4 +1,4 @@
-import {IsIn, IsObject, IsString, MaxLength, MinLength,  } from 'class-validator';
+import {IsIn, IsObject, IsOptional, IsString, MaxLength, MinLength,  } from 'class-validator';
 
 
 export class CreateWalletDto {
@@ -12,6 +12,7 @@ export class CreateWalletDto {
   description_wallet: string;
 
   @IsObject()
+  @IsOptional()
   meta: any | null;
 
   @IsString()
