@@ -1,7 +1,21 @@
-import { IsIn, IsString } from 'class-validator';
+import { IsIn, IsNumber, IsPositive, IsString, MinLength } from 'class-validator';
 
 export class CreateTransferDto {
   @IsString()
-  @IsIn(['exchange', 'transfer','refund','incomes','expenses'])
-  type: string;
+  @MinLength(5)
+  fromWalletId: string
+
+  @IsString()
+  @MinLength(5)
+  toWalletId: string
+  
+  @IsNumber()
+  @IsPositive()
+  amount: number
+
+  @IsNumber()
+  fee: number
+
+  @IsNumber()
+  revenue: number
 }

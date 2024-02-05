@@ -13,45 +13,21 @@ export class TransactionsService {
   constructor(
     @Inject(WalletsService)
     private readonly walletsService: WalletsService,
-    
-    @InjectRepository(Transaction)
-    private readonly transactionRepository: Repository<Transaction>,
-
-    @InjectRepository(Wallet)
-    private readonly walletRepository: Repository<Wallet>,
-
-
-    private readonly dataSource: DataSource,
   ) {}
-
-  async create(createTransactionDto: CreateTransactionDto, user: User) {
-    return `This action returns create transactions`;
-  }
 
   async createNewTransaction(
     walletId: string,
     amount: number,
-    meta: any
+    meta: any,
+    type: string
   ): Promise<Transaction> {
     const transaction = new Transaction();
+    // TODO: ELIMINAR LA CONSULTA
     transaction.wallet = await this.walletsService.getWalletOne(walletId);
     transaction.amount = amount;
     transaction.confirmed = true; 
-    transaction.type = amount > 0 ? 'deposit' : 'withdraw';
+    transaction.type = type;
     transaction.meta = meta;
-    return transaction;
-  }
-
-  async createNewDepositTransaction(
-    walletIdSelected: string,
-    amount: number,
-  ): Promise<Transaction> {
-    const transaction = new Transaction();
-    // TODO: OPTIMIZAR CONSULTA A LA WALLET
-    transaction.wallet = await this.walletsService.getWalletOne(walletIdSelected);
-    transaction.amount = amount;
-    transaction.confirmed = true; 
-    transaction.type = 'deposit';
     return transaction;
   }
   

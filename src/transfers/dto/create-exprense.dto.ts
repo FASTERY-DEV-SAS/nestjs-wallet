@@ -1,4 +1,4 @@
-import { IsNumber, IsObject, IsPositive, IsString } from 'class-validator';
+import { IsNumber, IsObject, IsPositive, IsString, MinLength } from 'class-validator';
 
 export class CreateExpenseDto {
   @IsObject()
@@ -12,6 +12,11 @@ export class CreateExpenseDto {
   amount: number;
 
   @IsString()
+  @MinLength(3)
   walletIdSelected: string;
+  
+  @IsString()
+  @MinLength(3)
+  categoryIdSelected: string;
 
 }

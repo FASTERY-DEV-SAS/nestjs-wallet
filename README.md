@@ -54,14 +54,15 @@ $ npm run test:cov
 
 |            Wallets         | Response |
 |----------------------------|----------|
-| createWallet               |  1372ms  |
-| showWallets ✔️             |  1121ms  |
-| refreshBalance/:id         |   2.15s  |
-| createExpense              |   6.15s  |
-| createIncome               |   6.15s  |
+| createWallet               |   718ms  |
+| showWallets                |   314ms  |
+| updateWalletBalance/:id    |  1259ms  |
+| validateWalletBalance/:id  |  1279ms  |
 
 
-
+|          Transfers         | Response |
+|----------------------------|----------|
+| createWallet               |   800ms  |
 
 
 #### Organizations
