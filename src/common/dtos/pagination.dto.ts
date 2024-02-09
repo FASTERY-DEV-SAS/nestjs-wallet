@@ -17,4 +17,17 @@ export class PaginationDto {
 
   @IsString()
   year: string;
+
+  @IsString()
+  walletId: string;
+
+  @IsString()
+  categoryId: string;
+
+  @IsString()
+  type: string;
+
+  @IsString()
+  search: string;
+
 }

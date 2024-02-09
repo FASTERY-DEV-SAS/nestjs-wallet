@@ -86,7 +86,7 @@ export class TransfersService {
         "revenue"
       );
       await this.transactionRepository.save(revenueTransaction);
-      
+
       // const previousBalance = +fromWallet.balance - +createTransferDto.amount;
 
       const transfer = this.transferRepository.create({
@@ -166,7 +166,7 @@ export class TransfersService {
 
       console.log(fromWallet.balance
         , createIncomeDto.amount);
-        
+
       const previousBalance = +fromWallet.balance + +createIncomeDto.amount;
 
       const transfer = this.transferRepository.create({
@@ -283,7 +283,7 @@ export class TransfersService {
         throw new Error('Mes o año no válidos');
       }
 
-      const transfers = await this.transferRepository
+      const queryBuilder = this.transferRepository
         .createQueryBuilder('transfers')
         .leftJoinAndSelect('transfers.fromWallet', 'fromWallet')
         .leftJoinAndSelect('transfers.toWallet', 'toWallet')
@@ -294,7 +294,25 @@ export class TransfersService {
         .leftJoinAndSelect('transfers.category', 'category')
         .where('fromWallet.user = :userId', { userId: user.id })
         .andWhere('EXTRACT(MONTH FROM transfers.operationDate) = :month', { month })
-        .andWhere('EXTRACT(YEAR FROM transfers.operationDate) = :year', { year })
+        .andWhere('EXTRACT(YEAR FROM transfers.operationDate) = :year', { year });
+
+      if (paginationDto.walletId) {
+        queryBuilder.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId: paginationDto.walletId });
+      }
+
+      if (paginationDto.categoryId) {
+        queryBuilder.andWhere('category.id = :categoryId', { categoryId: paginationDto.categoryId });
+      }
+
+      if (paginationDto.type) {
+        queryBuilder.andWhere('transfers.type = :type', { type: paginationDto.type });
+      }
+
+      if (paginationDto.search) {
+        queryBuilder.andWhere('(transfers.meta::text ILIKE :search OR transfers.status ILIKE :search)', { search: `%${paginationDto.search}%` });
+      }
+
+      const transfers = await queryBuilder
         .orderBy('transfers.operationDate', 'DESC')
         .skip(paginationDto.offset || 0)
         .take(paginationDto.limit || 10)
@@ -312,6 +330,7 @@ export class TransfersService {
       // Puedes realizar acciones de limpieza o manejo de recursos aquí si es necesario
     }
   }
+
 
   async findOne(id: string) {
     try {

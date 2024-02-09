@@ -162,6 +162,24 @@ export class WalletsService {
     }
   }
 
+  async overallBalance(user: User): Promise<number> {
+    try {
+      const wallets = await this.walletRepository.find({
+        where: { user: { id: user.id } },
+      });
+
+      let overallBalance = 0;
+
+      wallets.forEach((wallet) => {
+        overallBalance += parseFloat(wallet.balance.toString());
+      });
+
+      return overallBalance;
+    } catch (error) {
+      throw new Error('Error retrieving overall balance');
+    }
+  }
+
   async showWallets(user: User): Promise<Wallet[]> {
     try {
       // Retorna las billeteras asociadas al usuario actual sin incluir las transacciones

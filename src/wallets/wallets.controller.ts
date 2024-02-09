@@ -32,6 +32,12 @@ export class WalletsController {
     return this.walletsService.getWalletOneAuth(id,user);
   }
 
+  @Get('overallBalance')
+  @Auth(ValidRoles.user,ValidRoles.admin)
+  overallBalance(@GetUser() user: User) {
+    return this.walletsService.overallBalance(user);
+  }
+
   @Get('showWallets')
   @Auth(ValidRoles.user,ValidRoles.admin)
   showWallets(@GetUser() user: User) {
