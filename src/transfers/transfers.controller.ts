@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Query,
+  Inject,
+  Logger,
 } from '@nestjs/common';
 import { TransfersService } from './transfers.service';
 import { CreateTransferDto } from './dto/create-transfer.dto';
@@ -19,42 +21,43 @@ import { User } from 'src/auth/entities/user.entity';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { ClientProxy, MessagePattern } from '@nestjs/microservices';
 
 @Controller('transfers')
 export class TransfersController {
+  private readonly logger = new Logger(TransfersController.name);
+  private isProcessing = false;
+  private queue: { createIncomeDto: CreateIncomeDto, user: User }[] = [];
   constructor(
     private readonly walletsService: WalletsService,
     private readonly transfersService: TransfersService,
-  ) {}
+  ) { }
 
   @Post('transfer')
   @Auth(ValidRoles.user)
   transferWalletToWallet(@Body() createTransferDto: CreateTransferDto, @GetUser() user: User) {
-    return this.transfersService.transferWalletToWallet(createTransferDto,user);
+    return this.transfersService.transferWalletToWallet(createTransferDto, user);
+  }
+
+  @Post('createExpense')
+  @Auth(ValidRoles.user, ValidRoles.admin)
+  async createExpenseController(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
+    return this.transfersService.createExpense(createExpenseDto, user);
   }
 
   @Post('createIncome')
-  @Auth(ValidRoles.user)
-  createIncome(@Body()
-  createIncomeDto: CreateIncomeDto, @GetUser() user: User) {
-    return this.transfersService.createIncome(createIncomeDto,user);
-  }
-  
-  @Post('createExpense')
-  @Auth(ValidRoles.user)
-  createExpense(@Body()
-  createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
-    return this.transfersService.createExpense(createExpenseDto,user);
+  @Auth(ValidRoles.user, ValidRoles.admin)
+  async createIncomeController(@Body() createIncomeDto: CreateIncomeDto, @GetUser() user: User) {
+    return this.transfersService.createIncome(createIncomeDto, user);
   }
 
   @Get('allTransfers')
   @Auth(ValidRoles.user)
   allTransfers(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
-    return this.transfersService.allTransfers(user,paginationDto);
+    return this.transfersService.allTransfers(user, paginationDto);
   }
 
   @Get(':id')
-  // @Auth(ValidRoles.user)
   findOne(@Param('id') id: string) {
     return this.transfersService.findOne(id);
   }

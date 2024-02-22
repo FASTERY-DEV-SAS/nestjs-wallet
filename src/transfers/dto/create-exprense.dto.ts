@@ -1,10 +1,12 @@
-import { IsNumber, IsObject, IsPositive, IsString, MinLength } from 'class-validator';
+import { IsNumber, IsObject, IsOptional, IsPositive, IsString, MinLength } from 'class-validator';
 
 export class CreateExpenseDto {
   @IsObject()
   meta: any | null;
   
   @IsNumber()
+  @IsPositive()
+  @IsOptional()
   fee: number;
   
   @IsNumber()

@@ -13,21 +13,27 @@ export class PaginationDto {
   offset?: number;
 
   @IsString()
+  @IsOptional()
   month: string;
 
   @IsString()
+  @IsOptional()
   year: string;
 
   @IsString()
+  @IsOptional()
   walletId: string;
 
   @IsString()
+  @IsOptional()
   categoryId: string;
 
   @IsString()
+  @IsOptional()
   type: string;
 
   @IsString()
+  @IsOptional()
   search: string;
 
 }

@@ -10,25 +10,21 @@ import { WalletsService } from 'src/wallets/wallets.service';
 
 @Injectable()
 export class TransactionsService {
-  constructor(
-    @Inject(WalletsService)
-    private readonly walletsService: WalletsService,
-  ) {}
-
-  async createNewTransaction(
-    walletId: string,
+  createNewTransaction(
+    walletId: string, // Solo el ID de la cartera
     amount: number,
     meta: any,
     type: string
-  ): Promise<Transaction> {
+  ) {
+    if (!walletId || typeof walletId !== 'string') {
+      throw new Error('Invalid walletId');
+    }
     const transaction = new Transaction();
-    // TODO: ELIMINAR LA CONSULTA
-    transaction.wallet = await this.walletsService.getWalletOne(walletId);
+    transaction.wallet = { id: walletId } as Wallet;
     transaction.amount = amount;
-    transaction.confirmed = true; 
+    transaction.confirmed = true;
     transaction.type = type;
     transaction.meta = meta;
     return transaction;
   }
-  
 }

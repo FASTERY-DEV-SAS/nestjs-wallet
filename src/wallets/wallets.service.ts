@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
@@ -7,6 +7,9 @@ import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class WalletsService {
+  private readonly logger = new Logger(WalletsService.name);
+  private walletExistenceCache: Map<string, boolean> = new Map();
+
   constructor(
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
@@ -25,7 +28,10 @@ export class WalletsService {
 
       await Promise.all([saveOperation]);
 
-      return newwallet;
+      return {
+        message: 'Billetera creada con éxito',
+        status: true,
+      };
     } catch (error) {
       throw new Error('Error creating wallet');
     }
@@ -37,7 +43,7 @@ export class WalletsService {
         where: { id: walletId },
         relations: ['transactions'],
       });
-  
+
       const result = await this.walletRepository
         .createQueryBuilder('wallet')
         .leftJoin('wallet.transactions', 'transaction')
@@ -46,11 +52,11 @@ export class WalletsService {
         .andWhere('transaction.confirmed = true')
         .setParameters({ types: ['deposit', 'revenue', 'fee', 'withdraw'] })
         .getRawOne();
-  
+
       wallet.balance = result.balance !== null ? parseFloat(result.balance) : 0;
-  
+
       await this.walletRepository.save(wallet);
-  
+
       return wallet;
     } catch (error) {
       if (error instanceof NotFoundException) {
@@ -59,18 +65,18 @@ export class WalletsService {
       throw new Error('Error updating wallet balance');
     }
   }
-  
+
   async validateWalletBalance(walletId: string) {
     try {
       const wallet = await this.walletRepository.findOneOrFail({
         where: { id: walletId },
         relations: ['transactions'],
       });
-  
+
       const relevantTransactions = wallet.transactions.filter(
         (transaction) => transaction.confirmed
       );
-  
+
       const balanceTransaction = relevantTransactions.reduce(
         (total, transaction) => {
           if (transaction.type === 'deposit' || transaction.type === 'revenue') {
@@ -82,13 +88,13 @@ export class WalletsService {
         },
         0
       );
-  
+
       const balanceWallet = Number(wallet.balance);
       const roundedBalanceTransaction = Math.round(balanceTransaction * 100) / 100;
       const roundedBalanceWallet = Math.round(balanceWallet * 100) / 100;
-  
+
       const balanceMatches = roundedBalanceWallet === roundedBalanceTransaction;
-  
+
       return {
         message: balanceMatches ? 'Balance matches' : 'Balance does not match',
         status: balanceMatches,
@@ -102,8 +108,8 @@ export class WalletsService {
       };
     }
   }
-  
-  async validateAmount(amount: number): Promise<boolean> {
+
+  validateAmount(amount: number) {
     const amountRegex = /^[1-9]\d*(\.\d{1,2})?$/;
     if (!amountRegex.test(amount.toString())) {
       throw new BadRequestException('Amount must be a number with two decimals');
@@ -125,18 +131,17 @@ export class WalletsService {
 
   async getWalletOne(walletId: string): Promise<Wallet> {
     try {
-      const wallet = await this.walletRepository.findOne({
+      const wallet = await this.walletRepository.findOneOrFail({
         where: { id: walletId },
         relations: ['transactions']
       });
-  
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
-  
       return wallet;
     } catch (error) {
-      throw new Error('Error fetching wallet');
+      if (error.name === 'EntityNotFound') {
+        throw new NotFoundException('Wallet not found');
+      } else {
+        throw new Error('Error fetching wallet');
+      }
     }
   }
 
@@ -182,15 +187,17 @@ export class WalletsService {
 
   async showWallets(user: User): Promise<Wallet[]> {
     try {
-      // Retorna las billeteras asociadas al usuario actual sin incluir las transacciones
       return await this.walletRepository.find({
         where: { user: { id: user.id } },
+        order: {
+          createDate: "ASC"
+        }
       });
     } catch (error) {
-      // Maneja cualquier error que pueda ocurrir durante la recuperación
       throw new Error('Error retrieving wallets');
     }
   }
+
 
   async containsBalance(wallet: Wallet, amount: number): Promise<boolean> {
     await this.updateWalletBalance(wallet.id);
@@ -200,23 +207,24 @@ export class WalletsService {
     return true;
   }
 
-  async walletIdExistsInUser(walletId: string, user: User): Promise<boolean> {
-    try {
-      const wallet = await this.getWalletOne(walletId);
-      if (wallet.user.id === user.id) {
-        return true;
-      } else {
-        throw new BadRequestException('Wallet does not exist');
-      }
-    } catch (error) {
-      throw new BadRequestException('Wallet does not exist');
-    }
-  }
+  // async walletIdExistsInUser(walletId: string, user: User): Promise<boolean> {
+  //   try {
+  //     const wallet = await this.walletRepository.findOne({ where: { id: walletId, user: { id: user.id } } });
+  //     if (wallet) {
+  //       return true;
+  //     } else {
+  //       throw new BadRequestException('Wallet does not exist');
+  //     }
+  //   } catch (error) {
+  //     throw new BadRequestException('Wallet does not exist');
+  //   }
+  // }
+
 
   async canWithdraw(walletId: string, amount: number): Promise<boolean> {
     try {
-      const wallet = await this.getWalletOne(walletId);
-      if (wallet.balance >= amount) {
+      const wallet = await this.walletRepository.findOne({ where: { id: walletId } });
+      if (wallet && wallet.balance >= amount) {
         return true;
       } else {
         throw new BadRequestException('Insufficient funds in the wallet');
@@ -225,5 +233,27 @@ export class WalletsService {
       throw new BadRequestException('Wallet not found');
     }
   }
+
+  // TODO: EN CASO DE ELIMINAR LA WALLET QUE BORRE EL CACHE
+  async walletIdExistsInUser(walletId: string, user: User): Promise<boolean> {
+    const userId = user.id;
+
+    // Verificar la caché
+    if (this.walletExistenceCache.has(userId)) {
+      this.logger.debug(`Cache Verificar: ${JSON.stringify(Array.from(this.walletExistenceCache))}`);
+      return this.walletExistenceCache.get(userId);
+    }
+
+    // Consultar la base de datos
+    const wallet = await this.walletRepository.findOne({ where: { id: walletId, user: { id: userId } } });
+    const exists = !!wallet;
+
+    // Actualizar la caché
+    this.walletExistenceCache.set(userId, exists);
+    this.logger.debug(`Cache Actualizar: ${JSON.stringify(Array.from(this.walletExistenceCache))}`);
+
+    return exists;
+  }
+
 
 }

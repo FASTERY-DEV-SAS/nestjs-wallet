@@ -52,12 +52,13 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password))
       throw new UnauthorizedException('Invalid credentials (password)');
     delete user.password;
+    console.log(user);
     return {
       ...user,
       token: this.getJwtToken({ id: user.id }),
     };
   }
-
+  
   async checkAuthStatus(user: User) {
     return {
       ...user,

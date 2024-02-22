@@ -22,7 +22,7 @@ export class Transaction {
   @Column('bool', { default: false })
   confirmed: boolean;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb', nullable: true, default: { description: 'No description' } })
   meta: any | null;
 
   @CreateDateColumn({})

@@ -3,7 +3,7 @@ import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateTransferDto } from './dto/update-transfer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { Transfer } from './entities/transfer.entity';
 import { TransactionsService } from 'src/transactions/transactions.service';
 import { WalletsService } from 'src/wallets/wallets.service';
@@ -13,6 +13,7 @@ import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { retry } from 'rxjs';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
+import { ClientProxy, MessagePattern } from '@nestjs/microservices';
 
 @Injectable()
 export class TransfersService {
@@ -33,140 +34,155 @@ export class TransfersService {
     private readonly dataSource: DataSource,
   ) { }
 
-  async transferWalletToWallet(
-    createTransferDto: CreateTransferDto, user: User
-  ) {
-    await this.walletsService.validateAmount(createTransferDto.amount);
+  async transferWalletToWallet(createTransferDto: CreateTransferDto, user: User) {
+    try {
+      // Validar la cantidad de la transferencia
+      await this.walletsService.validateAmount(createTransferDto.amount);
 
-    const fromWallet = await this.walletsService.getWalletOne(createTransferDto.fromWalletId);
+      // Obtener la billetera de origen
+      const fromWallet = await this.walletsService.getWalletOne(createTransferDto.fromWalletId);
 
-    await this.walletsService.containsBalance(fromWallet, createTransferDto.amount);
+      // Verificar que la billetera de origen tenga suficiente saldo para la transferencia
+      await this.walletsService.containsBalance(fromWallet, createTransferDto.amount);
 
-    const toWallet = await this.walletsService.getWalletOne(createTransferDto.toWalletId);
+      // Obtener la billetera de destino
+      const toWallet = await this.walletsService.getWalletOne(createTransferDto.toWalletId);
 
-    // Iniciar una transacción
-    const queryRunner = this.transferRepository.manager.connection.createQueryRunner();
+      // Iniciar una transacción
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+
+        const processedBalancefromWallet = +fromWallet.balance - +createTransferDto.amount - +createTransferDto.fee + +createTransferDto.revenue;
+        console.log('previousBalance:', processedBalancefromWallet);
+
+        // Actualizar el saldo de la cartera
+        await this.updateWalletBalance(queryRunner, fromWallet.id, processedBalancefromWallet);
+
+        const processedBalancetoWallet = +toWallet.balance + +createTransferDto.amount;
+        console.log('previousBalance:', processedBalancetoWallet);
+
+        await this.updateWalletBalance(queryRunner, toWallet.id, processedBalancetoWallet);
+
+
+        // Crear todas las transacciones de forma paralela
+        const transactionsCreationPromises = [
+          this.transactionsService.createNewTransaction(
+            createTransferDto.fromWalletId,
+            createTransferDto.amount * -1,
+            "withdrawTransaction",
+            "withdraw"
+          ),
+          this.transactionsService.createNewTransaction(
+            createTransferDto.toWalletId,
+            createTransferDto.amount,
+            "depositTransaction",
+            "deposit"
+          ),
+          this.transactionsService.createNewTransaction(
+            createTransferDto.fromWalletId,
+            createTransferDto.fee * -1,
+            "feeTransaction",
+            "fee"
+          ),
+          this.transactionsService.createNewTransaction(
+            createTransferDto.fromWalletId,
+            createTransferDto.revenue,
+            "revenueTransaction",
+            "revenue"
+          )
+        ];
+
+        const transactionData = await Promise.all(transactionsCreationPromises);
+
+        // Guardar las transacciones en la base de datos
+        await queryRunner.manager.save(Transaction, transactionData);
+
+        // Crear el objeto Transfer
+        const transfer = this.transferRepository.create({
+          type: 'transfer',
+          deposit: transactionData[1],
+          withdraw: transactionData[0],
+          fromWallet: fromWallet,
+          toWallet: toWallet,
+          revenue: transactionData[3],
+          fee: transactionData[2],
+        });
+
+        // Guardar la transferencia en la base de datos
+        await queryRunner.manager.save(Transfer, transfer);
+
+        // Confirmar la transacción
+        await queryRunner.commitTransaction();
+
+        // Devolver mensaje de éxito
+        return { message: 'Transferencia realizada con éxito', status: true };
+      } catch (error) {
+        // Revertir la transacción en caso de error
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        // Liberar recursos
+        await queryRunner.release();
+      }
+    } catch (error) {
+      // Devolver mensaje de error
+      return { message: 'Error al realizar la transferencia', status: false };
+    }
+  }
+
+  async createIncome(createIncomeDto: CreateIncomeDto, user: User): Promise<any> {
+    if (createIncomeDto.fee === undefined) {
+      createIncomeDto.fee = 0;
+    }
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Realizar la transacción de retiro
-      // FIX: USAR new Transaction();
-      // const withdrawTransaction = await this.transactionsService.createNewTransaction(
-      //   createTransferDto.fromWalletId,
-      //   createTransferDto.amount * -1,
-      //   "withdrawTransaction",
-      //   "withdraw",
-      // );
-      const withdrawTransaction = await this.transactionsService.createNewTransaction(
-        createTransferDto.fromWalletId,
-        createTransferDto.amount * -1,
-        "withdrawTransaction",
-        "withdraw",
-      );
-      await this.transactionRepository.save(withdrawTransaction);
-
-      const depositTransaction = await this.transactionsService.createNewTransaction(
-        createTransferDto.toWalletId,
-        createTransferDto.amount,
-        "depositTransaction",
-        "deposit"
-      );
-      await this.transactionRepository.save(depositTransaction);
-
-      const feeTransaction = await this.transactionsService.createNewTransaction(
-        createTransferDto.fromWalletId,
-        createTransferDto.fee * -1,
-        "feeTransaction",
-        "fee"
-      );
-      await this.transactionRepository.save(feeTransaction);
-
-      const revenueTransaction = await this.transactionsService.createNewTransaction(
-        createTransferDto.fromWalletId,
-        createTransferDto.revenue,
-        "revenueTransaction",
-        "revenue"
-      );
-      await this.transactionRepository.save(revenueTransaction);
-
-      // const previousBalance = +fromWallet.balance - +createTransferDto.amount;
-
-      const transfer = this.transferRepository.create({
-        type: 'transfer',
-        deposit: depositTransaction,
-        withdraw: withdrawTransaction,
-        fromWallet: fromWallet,
-        toWallet: toWallet,
-        revenue: revenueTransaction,
-        fee: feeTransaction,
-        // previous_balance: previousBalance
-      });
-
-      // Actualizar los saldos de las billeteras 
-      // FIXME: Crear otro endpoint para actualizar el saldo de la billetera
-
-      await this.transferRepository.save(transfer);
-
-      // Confirmar la transacción
-      await queryRunner.commitTransaction();
-      return { message: 'Transferencia realizada con éxito', status: true };
-
-    } catch (error) {
-      // Revertir la transacción en caso de error
-      await queryRunner.rollbackTransaction();
-      return { message: 'Error al realizar la transferencia', status: false };
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async createIncome(createIncomeDto: CreateIncomeDto, user: User) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    try {
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
+      // Validar el monto del ingreso
+      this.walletsService.validateAmount(createIncomeDto.amount);
 
       // Validar si la cartera existe para el usuario
       await this.walletsService.walletIdExistsInUser(createIncomeDto.walletIdSelected, user);
 
-      // Validar el monto del ingreso
-      this.walletsService.validateAmount(createIncomeDto.amount);
-
       // Obtener la cartera desde la base de datos
       const fromWallet = await this.walletsService.getWalletOne(createIncomeDto.walletIdSelected);
+      console.log('fromWallet:', fromWallet.balance);
 
-      // Crear las transacciones
-      const transactionData = [
-        { amount: 0, meta: { description: 'No description' }, type: "withdraw" },
-        { amount: createIncomeDto.amount, meta: createIncomeDto.meta, type: "deposit" },
-        { amount: createIncomeDto.fee * -1, meta: createIncomeDto.feeMeta, type: "fee" },
-        { amount: 0, meta: { description: 'No description' }, type: "revenue" }
-      ];
-
-      const transactions = await Promise.all(transactionData.map(async transaction =>
-        this.transactionsService.createNewTransaction(createIncomeDto.walletIdSelected, transaction.amount, transaction.meta, transaction.type)
-      ));
-
-      // Guardar las transacciones en la base de datos
-      await queryRunner.manager.save(Transaction, transactions);
+      // Calcular saldo previo
+      const processedBalance = +fromWallet.balance + +createIncomeDto.amount - +createIncomeDto.fee;
+      console.log('previousBalance:', processedBalance);
 
       // Actualizar el saldo de la cartera
-      const previousBalance = +fromWallet.balance + +createIncomeDto.amount;
-      fromWallet.balance = previousBalance;
-      await queryRunner.manager.save(Wallet, fromWallet);
+      await this.updateWalletBalance(queryRunner, createIncomeDto.walletIdSelected, processedBalance);
+
+      // Crear las transacciones en paralelo
+      const transactionPromises = [
+        this.transactionsService.createNewTransaction(createIncomeDto.walletIdSelected, 0, { description: 'No description' }, "withdraw"),
+        this.transactionsService.createNewTransaction(createIncomeDto.walletIdSelected, createIncomeDto.amount, createIncomeDto.meta, "deposit"),
+        this.transactionsService.createNewTransaction(createIncomeDto.walletIdSelected, createIncomeDto.fee * -1, createIncomeDto.feeMeta, "fee"),
+        this.transactionsService.createNewTransaction(createIncomeDto.walletIdSelected, 0, { description: 'No description' }, "revenue")
+      ];
+
+      const transactionData = await Promise.all(transactionPromises);
+
+      // Guardar las transacciones en la base de datos
+      await queryRunner.manager.save(Transaction, transactionData);
 
       // Crear el objeto Transfer
       const transfer = this.transferRepository.create({
         type: 'income',
-        deposit: transactions[1],
-        withdraw: transactions[0],
-        fromWallet: fromWallet,
+        deposit: transactionData[1],
+        withdraw: transactionData[0],
+        fromWallet: { id: createIncomeDto.walletIdSelected } as Wallet,
         toWallet: null,
-        revenue: transactions[3],
-        fee: transactions[2],
+        revenue: transactionData[3],
+        fee: transactionData[2],
         category: { id: createIncomeDto.categoryIdSelected },
-        previous_balance: previousBalance
+        processed_balance: processedBalance
       });
 
       // Guardar el objeto Transfer en la base de datos
@@ -174,7 +190,6 @@ export class TransfersService {
 
       // Confirmar la transacción
       await queryRunner.commitTransaction();
-
       return { message: 'Transferencia realizada con éxito', status: true };
     } catch (error) {
       // Revertir la transacción en caso de error
@@ -187,80 +202,76 @@ export class TransfersService {
     }
   }
 
+  async updateWalletBalance(queryRunner: QueryRunner, walletId: string, newBalance: number) {
+    await queryRunner.manager.update(Wallet, walletId, { balance: newBalance });
+  }
+
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
-
-    await this.walletsService.walletIdExistsInUser(createExpenseDto.walletIdSelected, user);
-
-    const fromWallet = await this.walletsService.getWalletOne(createExpenseDto.walletIdSelected);
-
-    await this.walletsService.validateAmount(createExpenseDto.amount);
-
-    await this.walletsService.canWithdraw(createExpenseDto.walletIdSelected, createExpenseDto.amount);
-
-    // Iniciar una transacción
-    const queryRunner = this.transferRepository.manager.connection.createQueryRunner();
+    if (createExpenseDto.fee === undefined) {
+      createExpenseDto.fee = 0;
+    }
+    const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Realizar la transacción de retiro
-      const withdrawTransaction = await this.transactionsService.createNewTransaction(
-        createExpenseDto.walletIdSelected,
-        createExpenseDto.amount * -1,
-        "withdrawTransaction",
-        "withdraw"
-      );
-      await this.transactionRepository.save(withdrawTransaction);
+      // Validaciones
+      await Promise.all([
+        this.walletsService.validateAmount(createExpenseDto.amount),
+        // this.walletsService.walletIdExistsInUser(createExpenseDto.walletIdSelected, user),
+        this.walletsService.canWithdraw(createExpenseDto.walletIdSelected, createExpenseDto.amount)
+      ]);
 
-      const depositTransaction = await this.transactionsService.createNewTransaction(
-        createExpenseDto.walletIdSelected,
-        0,
-        "depositTransaction",
-        "deposit"
-      );
-      await this.transactionRepository.save(depositTransaction);
+      // Obtener la cartera desde la base de datos
+      const fromWallet = await this.walletsService.getWalletOne(createExpenseDto.walletIdSelected);
+      console.log('fromWallet:', fromWallet.balance);
 
-      const feeTransaction = await this.transactionsService.createNewTransaction(
-        createExpenseDto.walletIdSelected,
-        createExpenseDto.fee * -1,
-        "feeTransaction",
-        "fee"
-      );
-      await this.transactionRepository.save(feeTransaction);
+      // Calcular saldo previo
+      const processedBalance = +fromWallet.balance - +createExpenseDto.amount - +createExpenseDto.fee;
+      console.log('previousBalance:', processedBalance);
 
-      const revenueTransaction = await this.transactionsService.createNewTransaction(
-        createExpenseDto.walletIdSelected,
-        0,
-        "revenueTransaction",
-        "revenue"
-      );
-      await this.transactionRepository.save(revenueTransaction);
+      // Actualizar saldo de la cartera
+      await this.updateWalletBalance(queryRunner, createExpenseDto.walletIdSelected, processedBalance);
 
-      const previousBalance = +fromWallet.balance - +createExpenseDto.amount;
+      // Crear transacciones en paralelo
+      const transactionPromises = [
+        this.transactionsService.createNewTransaction(createExpenseDto.walletIdSelected, createExpenseDto.amount * -1, createExpenseDto.meta, "withdraw"),
+        this.transactionsService.createNewTransaction(createExpenseDto.walletIdSelected, 0, { description: 'No description' }, "deposit"),
+        this.transactionsService.createNewTransaction(createExpenseDto.walletIdSelected, createExpenseDto.fee * -1, { description: 'No description' }, "fee"),
+        this.transactionsService.createNewTransaction(createExpenseDto.walletIdSelected, 0, { description: 'No description' }, "revenue")
+      ];
 
+      const transactionData = await Promise.all(transactionPromises);
+
+      // Guardar transacciones
+      await queryRunner.manager.save(Transaction, transactionData);
+
+      // Crear transferencia
       const transfer = this.transferRepository.create({
         type: 'expense',
-        deposit: depositTransaction,
-        withdraw: withdrawTransaction,
-        fromWallet: fromWallet,
-        toWallet: fromWallet,
-        revenue: revenueTransaction,
-        fee: feeTransaction,
+        deposit: transactionData[1],
+        withdraw: transactionData[0],
+        fromWallet: { id: createExpenseDto.walletIdSelected } as Wallet,
+        toWallet: null,
+        revenue: transactionData[3],
+        fee: transactionData[2],
         category: { id: createExpenseDto.categoryIdSelected },
-        previous_balance: previousBalance
+        processed_balance: processedBalance
       });
 
-      await this.transferRepository.save(transfer);
+      // Guardar transferencia
+      await queryRunner.manager.save(Transfer, transfer);
 
-      // Confirmar la transacción
+      // Confirmar transacción
       await queryRunner.commitTransaction();
       return { message: 'Transferencia realizada con éxito', status: true };
-
     } catch (error) {
-      // Revertir la transacción en caso de error
+      // Revertir transacción en caso de error
       await queryRunner.rollbackTransaction();
+      console.error(error);
       return { message: 'Error al realizar la transferencia', status: false };
     } finally {
+      // Liberar recursos
       await queryRunner.release();
     }
   }
@@ -306,7 +317,7 @@ export class TransfersService {
       const transfers = await queryBuilder
         .orderBy('transfers.operationDate', 'DESC')
         .skip(paginationDto.offset || 0)
-        .take(paginationDto.limit || 10)
+        .take(paginationDto.limit)
         .getMany();
 
       if (transfers.length === 0) {
@@ -321,7 +332,6 @@ export class TransfersService {
       // Puedes realizar acciones de limpieza o manejo de recursos aquí si es necesario
     }
   }
-
 
   async findOne(id: string) {
     try {
