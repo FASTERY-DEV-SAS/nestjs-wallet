@@ -20,8 +20,11 @@ export class CategoriesService {
         ...categoryDetails,
         user,
       });
-      const category = await this.categoryRepository.save(newCategory);
-      return { ...category };
+      await this.categoryRepository.save(newCategory);
+      return {
+        status: true,
+        message: 'Category created successfully',
+      };
     } catch (error) {
       console.log(error);
     }
@@ -29,7 +32,7 @@ export class CategoriesService {
   async getAllCategories(user: User, typeCategory: string) {
     try {
       if (typeCategory === 'all') {
-        typeCategory=undefined;
+        typeCategory = undefined;
       }
       console.log(typeCategory);
       const categories = await this.categoryRepository.find({

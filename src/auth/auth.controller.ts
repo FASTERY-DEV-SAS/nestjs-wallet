@@ -7,6 +7,7 @@ import {
   Req,
   Headers,
   SetMetadata,
+  Inject,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,15 +21,27 @@ import { UserRoleGuard } from './guards/user-role/user-role.guard';
 import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces/valid-roles';
 import { Auth } from './decorators/auth.decorator';
+import { ClientProxy, Ctx, EventPattern, MessagePattern, NatsContext, Payload } from '@nestjs/microservices';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Inject('WALLET_FASTERY_SERVICE')
+    private readonly client: ClientProxy,
+  ) { }
+
+  @MessagePattern('sum55')
+  async testSumador(@Payload() data: number): Promise<number> {
+    console.log('Data', data);
+    return data + 5;
+  }
 
   @Post('register')
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.authService.create(createUserDto);
   }
+  
   @Post('login')
   loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
@@ -60,22 +73,4 @@ export class AuthController {
     };
   }
 
-  @Get('private2')
-  // @SetMetadata('roles', ['admin'])
-  @RoleProtected(ValidRoles.superUser)
-  @UseGuards(AuthGuard(), UserRoleGuard)
-  privateRoute2(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
-  @Get('private3')
-  @Auth(ValidRoles.admin)
-  privateRoute3(@GetUser() user: User) {
-    return {
-      ok: true,
-      user,
-    };
-  }
 }

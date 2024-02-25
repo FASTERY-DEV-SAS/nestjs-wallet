@@ -167,7 +167,7 @@ export class WalletsService {
     }
   }
 
-  async overallBalance(user: User): Promise<number> {
+  async overallBalance(user: User) {
     try {
       const wallets = await this.walletRepository.find({
         where: { user: { id: user.id } },
@@ -179,7 +179,10 @@ export class WalletsService {
         overallBalance += parseFloat(wallet.balance.toString());
       });
 
-      return overallBalance;
+      return {
+        status: true,
+        total: overallBalance,
+      };
     } catch (error) {
       throw new Error('Error retrieving overall balance');
     }
