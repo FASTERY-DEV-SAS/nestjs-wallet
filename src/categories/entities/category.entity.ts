@@ -38,7 +38,7 @@ export class Category {
     @ManyToOne(() => User, (user) => user.category)
     user: User;
 
-    @OneToMany(() => Transfer, (transfer) => transfer.category,{eager:true})
+    @OneToMany(() => Transfer, (transfer) => transfer.category)
     categoryTransfers:Transfer[];
 }
 

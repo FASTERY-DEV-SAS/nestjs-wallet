@@ -12,6 +12,6 @@ export class CreateCategoryDto {
 
     @IsString()
     @MinLength(3)
-    @IsIn(["incomes","expenses"]) 
+    @IsIn(["income","expense"]) 
     type: string;
 }

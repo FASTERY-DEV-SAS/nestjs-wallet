@@ -11,44 +11,60 @@ export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-  ) {}
-  
-  async createCategory(createCategoryDto: CreateCategoryDto, user:User) {
+  ) { }
+
+  async createCategory(createCategoryDto: CreateCategoryDto, user: User) {
     try {
       const { ...categoryDetails } = createCategoryDto;
       const newCategory = this.categoryRepository.create({
         ...categoryDetails,
         user,
       });
-      const category = await this.categoryRepository.save(newCategory);
-      return { ...category };
+      await this.categoryRepository.save(newCategory);
+      return {
+        status: true,
+        message: 'Category created successfully',
+      };
     } catch (error) {
       console.log(error);
-    } 
+    }
   }
-  // TODO : SE DEBE SE PUEDA INGRESAR SOLO INGREESO, GASTO Y ALL
-  async getAllCategories(user:User, typeCategory: string) {
+  async getAllCategories(user: User, typeCategory: string) {
     try {
+      if (typeCategory === 'all') {
+        typeCategory = undefined;
+      }
+      console.log(typeCategory);
       const categories = await this.categoryRepository.find({
-        where: { user: { id: user.id }, type: typeCategory},
+        where: { user: { id: user.id }, type: typeCategory },
+        order: { createDate: 'DESC' }
       });
+
       return categories;
     } catch (error) {
-      
+      console.error(error);
     }
   }
 
   async getCategoryById(id: string) {
     try {
-      const category = await this.categoryRepository.findOneBy({id});
+      const category = await this.categoryRepository.findOneBy({ id });
       return category;
     } catch (error) {
-      
+
     }
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    try {
+      await this.categoryRepository.update(id, updateCategoryDto);
+      return {
+        status: true,
+        message: 'Category updated successfully',
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   remove(id: number) {

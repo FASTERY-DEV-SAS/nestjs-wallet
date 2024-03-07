@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -17,11 +17,10 @@ export class CategoriesController {
     return this.categoriesService.createCategory(createCategoryDto,user);
   }
 
-  // FIXME: SE DEBE FILTARA POR MES
-  @Post('getAllCategories')
+  @Get('getAllCategories')
   @Auth(ValidRoles.user) 
   getAllCategories(
-    @GetUser() user: User,@Body('typeCategory') typeCategory: string) {
+    @GetUser() user: User, @Query('typeCategory') typeCategory: string) {
     return this.categoriesService.getAllCategories(user,typeCategory);
   }
 
@@ -32,7 +31,7 @@ export class CategoriesController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.update(+id, updateCategoryDto);
+    return this.categoriesService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')

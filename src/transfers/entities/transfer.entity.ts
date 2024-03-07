@@ -17,13 +17,13 @@ export class Transfer {
   id: string;
 
   @Column('text')
-  status: string;
+  type: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb', nullable: true, default: { description: 'No description' } })
   meta: any | null;
 
   @Column({ type: 'decimal', precision: 6, scale: 2, default: 0 })
-  previous_balance: number;
+  processed_balance: number;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers, { eager: true })
   fromWallet: Wallet;
@@ -46,14 +46,24 @@ export class Transfer {
   @ManyToOne(() => Category, (category) => category.categoryTransfers)
   category:Category;
 
-  @CreateDateColumn({})
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createDate: Date;
   
   // @Column({ type: 'date' })
   // FIXME: QUE SE PUEDA EDITAR ESTA FECHA Y FECHA DE CREACION
-  @CreateDateColumn({})
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   operationDate: Date;
 
-  @UpdateDateColumn({})
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
   updateDate: Date;
 }

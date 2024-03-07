@@ -7,7 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { TransactionsModule } from 'src/transactions/transactions.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   controllers: [AuthController],
@@ -26,6 +26,21 @@ import { TransactionsModule } from 'src/transactions/transactions.module';
         };
       },
     }),
+    ClientsModule.register([
+      {
+        name: 'WALLET_FASTERY_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqps://wnygmima:EaoUTWZwSNwVJQma-Z1clEBvYzBX-Dpf@whale.rmq.cloudamqp.com/wnygmima'],
+          queue: 'wallet_fastery_queue',
+          // urls: [process.env.RABBITMQ_URL],
+          // queue: process.env.RABBITMQ_QUEUE_NAME,
+          queueOptions: {
+            durable: false,
+          },
+        },
+      },
+    ]),
   ],
   exports: [TypeOrmModule, JwtStrategy, PassportModule, JwtModule],
 })
