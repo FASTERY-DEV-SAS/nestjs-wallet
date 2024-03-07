@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/auth/entities/user.entity';
+import { UpdateWalletDto } from './dto/update-wallet.dto';
 
 @Injectable()
 export class WalletsService {
@@ -31,9 +32,23 @@ export class WalletsService {
       return {
         message: 'Billetera creada con éxito',
         status: true,
+        id: newwallet.id,
       };
     } catch (error) {
       throw new Error('Error creating wallet');
+    }
+  }
+  
+  async updateWallet(id: string, updateWalletDto: UpdateWalletDto) {
+    try {
+      const updateOperation = this.walletRepository.update(id, updateWalletDto);
+      await Promise.all([updateOperation]);
+      return {
+        message: 'Billetera actualizada con éxito',
+        status: true,
+      };
+    } catch (error) {
+      throw new Error('Error updating wallet');
     }
   }
 

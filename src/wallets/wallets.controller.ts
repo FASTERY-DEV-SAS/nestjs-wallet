@@ -24,8 +24,13 @@ export class WalletsController {
   createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
     return this.walletsService.createWallet(createWalletDto, user);
   }
+  
+  @Patch(':id')
+  @Auth(ValidRoles.user, ValidRoles.admin)
+  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
+    return this.walletsService.updateWallet(id, updateWalletDto);
+  }
 
-  // TOMO: VERIFICAR SI ES NECESARIO
   @Get('wallet/:id')
   @Auth(ValidRoles.user, ValidRoles.admin)
   getWalletOneAuth(@Param('id') id: string, @GetUser() user: User) {
@@ -53,7 +58,4 @@ export class WalletsController {
   validateWalletBalance(@Param('id') id: string) {
     return this.walletsService.validateWalletBalance(id);
   }
-
-  
-
 }

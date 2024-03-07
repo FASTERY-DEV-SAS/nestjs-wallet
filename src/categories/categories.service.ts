@@ -37,13 +37,12 @@ export class CategoriesService {
       console.log(typeCategory);
       const categories = await this.categoryRepository.find({
         where: { user: { id: user.id }, type: typeCategory },
+        order: { createDate: 'DESC' }
       });
 
       return categories;
     } catch (error) {
-      // Handle the error appropriately, e.g., log it or send a response
       console.error(error);
-      return []; // Or return a suitable error response
     }
   }
 
@@ -56,8 +55,16 @@ export class CategoriesService {
     }
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    try {
+      await this.categoryRepository.update(id, updateCategoryDto);
+      return {
+        status: true,
+        message: 'Category updated successfully',
+      }
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   remove(id: number) {
