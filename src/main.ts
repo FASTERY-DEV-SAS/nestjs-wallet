@@ -43,13 +43,17 @@ async function bootstrap() {
 
     // MICROSERVICIO
     const microserviceApp = await NestFactory.createMicroservice(AppModule, {
-        transport: Transport.RMQ,
+        // transport: Transport.RMQ,
+        // options: {
+        //     urls: [process.env.RABBITMQ_URL],
+        //     queue: process.env.RABBITMQ_QUEUE_NAME,
+        //     queueOptions: {
+        //         durable: false,
+        //     },
+        // },
+        transport: Transport.TCP,
         options: {
-            urls: [process.env.RABBITMQ_URL],
-            queue: process.env.RABBITMQ_QUEUE_NAME,
-            queueOptions: {
-                durable: false,
-            },
+            port: 5000,
         },
     });
     microserviceApp.listen();

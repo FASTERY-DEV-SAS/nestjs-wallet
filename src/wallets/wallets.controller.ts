@@ -14,15 +14,18 @@ import { User } from 'src/auth/entities/user.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('wallets')
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
   @Post('createWallet')
-  @Auth(ValidRoles.user, ValidRoles.admin)
-  createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
-    return this.walletsService.createWallet(createWalletDto, user);
+  @MessagePattern({md: 'create-wallet'})
+  // @Auth(ValidRoles.user, ValidRoles.admin)
+  createWallet(@Payload() createWalletDto: CreateWalletDto) {
+  // createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
+    return this.walletsService.createWallet(createWalletDto);
   }
   
   @Patch(':id')
