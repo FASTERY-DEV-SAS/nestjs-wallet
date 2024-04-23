@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Headers 
 } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
@@ -21,11 +22,9 @@ export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
   @Post('createWallet')
-  @MessagePattern({md: 'create-wallet'})
-  // @Auth(ValidRoles.user, ValidRoles.admin)
-  createWallet(@Payload() createWalletDto: CreateWalletDto) {
-  // createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
-    return this.walletsService.createWallet(createWalletDto);
+  @Auth(ValidRoles.user, ValidRoles.admin)
+  createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
+    return this.walletsService.createWallet(createWalletDto,user);
   }
   
   @Patch(':id')
@@ -35,6 +34,7 @@ export class WalletsController {
   }
 
   @Get('wallet/:id')
+  @MessagePattern({md: 'get-wallet-id'})
   @Auth(ValidRoles.user, ValidRoles.admin)
   getWalletOneAuth(@Param('id') id: string, @GetUser() user: User) {
     return this.walletsService.getWalletOneAuth(id,user);

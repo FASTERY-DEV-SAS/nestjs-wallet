@@ -17,15 +17,8 @@ import { ClientProxy, MessagePattern, Payload } from '@nestjs/microservices';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    @Inject('WALLET_FASTERY_SERVICE')
-    private readonly client: ClientProxy,
   ) { }
 
-  @MessagePattern('sum55')
-  async testSumador(@Payload() data: number): Promise<number> {
-    console.log('Data', data);
-    return data + 5;
-  }
 
   @Post('register')
   createUser(@Body() createUserDto: CreateUserDto) {
