@@ -17,5 +17,11 @@
                 "DELETE"
             ]
         }
+    ],
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/backend"
+        }
     ]
 }
