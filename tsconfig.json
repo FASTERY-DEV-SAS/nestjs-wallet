@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
-    // "module": "commonjs",
-    "module": "nodenext",
+    "module": "commonjs",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
