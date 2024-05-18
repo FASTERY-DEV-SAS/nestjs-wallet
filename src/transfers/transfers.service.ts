@@ -190,7 +190,7 @@ export class TransfersService {
 
       // Confirmar la transacción
       await queryRunner.commitTransaction();
-      return { message: 'Transferencia realizada con éxito', status: true };
+      return { message: 'Transferencia realizada con éxito', status: true, transfer };
     } catch (error) {
       // Revertir la transacción en caso de error
       await queryRunner.rollbackTransaction();
