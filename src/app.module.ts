@@ -13,6 +13,11 @@ import { CategoriesModule } from './categories/categories.module';
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
+      ssl: process.env.STAGE === 'prod',
+      extra: {
+        ssl:
+          process.env.STAGE === 'prod' ? { rejectUnauthorized: false } : null,
+      },
       type: 'postgres',
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT),
@@ -21,7 +26,6 @@ import { CategoriesModule } from './categories/categories.module';
       password: process.env.DB_PASS,
       autoLoadEntities: true,
       synchronize: true,
-      ssl: true,
     }),
     CommonModule,
     FilesModule,
