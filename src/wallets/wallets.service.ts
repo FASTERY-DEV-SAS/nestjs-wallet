@@ -49,16 +49,25 @@ export class WalletsService {
     }
   }
 
-  async updateWallet(id: string, updateWalletDto: UpdateWalletDto) {
+  async updateWallet(id: string, updateWalletDto: UpdateWalletDto): Promise<{
+    statusCode: number;
+    message: string;
+  }> {
     try {
       const updateOperation = this.walletRepository.update(id, updateWalletDto);
       await Promise.all([updateOperation]);
       return {
+        statusCode: HttpStatus.OK,
         message: 'Billetera actualizada con éxito',
-        status: true,
       };
     } catch (error) {
-      throw new Error('Error updating wallet');
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Ocurrió un error al crear la billetera',
+        );
+      }
     }
   }
 
