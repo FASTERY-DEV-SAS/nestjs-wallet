@@ -22,7 +22,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       useFactory: (configService: ConfigService) => {
         return {
           secret: configService.get('JWT_SECRET'),
-          signOptions: { expiresIn: '48h' },
+          signOptions: { expiresIn: '12h' },
         };
       },
     }),
