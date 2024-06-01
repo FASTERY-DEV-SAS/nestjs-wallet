@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -19,9 +20,9 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<{ statusCode: number; message: string }> {
     try {
       const { password, ...userData } = createUserDto;
       const user = this.userRepository.create({
@@ -31,11 +32,17 @@ export class AuthService {
       await this.userRepository.save(user);
       delete user.password;
       return {
-        ...user,
-        token: this.getJwtToken({ id: user.id }),
+        statusCode: HttpStatus.CREATED,
+        message: 'Usuario registrado con éxito.',
       };
     } catch (error) {
-      this.handleDBError(error);
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Ocurrió un error al registrar el usuario.',
+        );
+      }
     }
   }
 
@@ -57,7 +64,7 @@ export class AuthService {
       token: this.getJwtToken({ id: user.id }),
     };
   }
-  
+
   async checkAuthStatus(user: User) {
     return {
       ...user,
