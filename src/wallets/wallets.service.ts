@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Wallet } from './entities/wallet.entity';
@@ -16,7 +16,11 @@ export class WalletsService {
     private readonly walletRepository: Repository<Wallet>,
   ) { }
 
-  async createWallet(createWalletDto: CreateWalletDto, user: User) {
+  async createWallet(createWalletDto: CreateWalletDto, user: User): Promise<{
+    statusCode: number;
+    message: string;
+    id: string;
+  }> {
     try {
       const { ...walletDetails } = createWalletDto;
 
@@ -30,15 +34,21 @@ export class WalletsService {
       await Promise.all([saveOperation]);
 
       return {
+        statusCode: HttpStatus.CREATED,
         message: 'Billetera creada con éxito',
-        status: true,
         id: newwallet.id,
       };
     } catch (error) {
-      throw new Error('Error creating wallet');
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Ocurrió un error al crear la billetera',
+        );
+      }
     }
   }
-  
+
   async updateWallet(id: string, updateWalletDto: UpdateWalletDto) {
     try {
       const updateOperation = this.walletRepository.update(id, updateWalletDto);
