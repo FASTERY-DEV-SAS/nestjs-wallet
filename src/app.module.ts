@@ -8,22 +8,23 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { CategoriesModule } from './categories/categories.module';
+import { envs } from './config';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
-      ssl: process.env.STAGE === 'prod',
+      ssl: envs.sta === 'prod',
       extra: {
         ssl:
-          process.env.STAGE === 'prod' ? { rejectUnauthorized: false } : null,
+          envs.sta === 'prod' ? { rejectUnauthorized: false } : null,
       },
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
-      database: process.env.DB_NAME,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
+      host: envs.dbHost,
+      port: envs.dbPort,
+      database: envs.dbName,
+      username: envs.dbUser,
+      password: envs.dbPass,
       autoLoadEntities: true,
       synchronize: true,
     }),
@@ -38,4 +39,4 @@ import { CategoriesModule } from './categories/categories.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

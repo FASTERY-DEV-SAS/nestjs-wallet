@@ -22,14 +22,11 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column('text', { default: '' })
-  fullName: string;
+  @Column('text', { default: '', unique: true })
+  userName: string;
 
-  @Column({ unique: true })
-  id_user: string;
-
-  @Column()
-  type_id_user: string;
+  @Column('text', { default: '1.1.1.1' })
+  ipRegister: string;
 
   @Column('text', {
     select: false,
@@ -43,14 +40,14 @@ export class User {
   roles: string[];
 
   @CreateDateColumn({})
-  createDate: Date;
+  createAt: Date;
 
   @UpdateDateColumn({})
-  updateDate: Date;
+  updateAt: Date;
 
   @OneToMany(() => Wallet, (wallet) => wallet.user)
   wallet: Wallet;
-  
+
   @OneToMany(() => Category, (category) => category.user)
   category: Category;
 
