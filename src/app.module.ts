@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
-import { FilesModule } from './files/files.module';
 import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { WalletsModule } from './wallets/wallets.module';
@@ -29,7 +28,6 @@ import { envs } from './config';
       synchronize: true,
     }),
     CommonModule,
-    FilesModule,
     AuthModule,
     TransactionsModule,
     WalletsModule,
