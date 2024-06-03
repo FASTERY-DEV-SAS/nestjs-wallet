@@ -15,11 +15,11 @@ export class WalletsService {
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
   ) { }
-
+  // USER
   async createWallet(createWalletDto: CreateWalletDto, user: User): Promise<{
     statusCode: number;
     message: string;
-    id: string;
+    walletId: string;
   }> {
     try {
       const { ...walletDetails } = createWalletDto;
@@ -36,7 +36,7 @@ export class WalletsService {
       return {
         statusCode: HttpStatus.CREATED,
         message: 'Billetera creada con éxito',
-        id: newwallet.id,
+        walletId: newwallet.id,
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -52,6 +52,7 @@ export class WalletsService {
   async updateWallet(id: string, updateWalletDto: UpdateWalletDto): Promise<{
     statusCode: number;
     message: string;
+    walletId: string;
   }> {
     try {
       const updateOperation = this.walletRepository.update(id, updateWalletDto);
@@ -59,6 +60,7 @@ export class WalletsService {
       return {
         statusCode: HttpStatus.OK,
         message: 'Billetera actualizada con éxito',
+        walletId: id
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -71,6 +73,96 @@ export class WalletsService {
     }
   }
 
+  async getOneWalletAuth(walletId: string, user: User): Promise<Wallet | object> {
+    try {
+      if (user.roles.includes('admin') || user.isActive) {
+        const wallet = await this.walletRepository.findOne({ where: { id: walletId } });
+        if (wallet) {
+          return wallet;
+        } else {
+          return { message: 'La billetera no existe', status: false };
+        }
+      } else {
+        const wallet = await this.walletRepository.findOne({
+          where: { id: walletId, user: { id: user.id } },
+        });
+        return wallet;
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Ocurrió un error al crear la billetera',
+        );
+      }
+    }
+
+  }
+
+  async overallBalance(user: User) {
+    let overallBalance = 0;
+    try {
+      const wallets = await this.walletRepository.find({
+        where: { user: { id: user.id } },
+      });
+
+      wallets.forEach((wallet) => {
+        overallBalance += parseFloat(wallet.balance.toString());
+        // FIXME: QUE SEA ENTERO Y NO DECIMAL
+      });
+
+      return {
+        statusCode: HttpStatus.OK,
+        total: overallBalance,
+        message: 'Balance general de las billeteras',
+
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      } else {
+        throw new InternalServerErrorException(
+          'Ocurrió un error al obtener el balance general de las billeteras',
+        );
+      }
+    }
+  }
+
+  async showWallets(user: User): Promise<Wallet[]> {
+    try {
+      return await this.walletRepository.find({
+        where: { user: { id: user.id } },
+        order: {
+          createDate: "ASC"
+        }
+      });
+    } catch (error) {
+      throw new Error('Error retrieving wallets');
+    }
+  }
+
+  // SYSTEM
+  async getWalletOne(walletId: string): Promise<Wallet> {
+    try {
+      const wallet = await this.walletRepository.findOneOrFail({
+        where: { id: walletId },
+        relations: ['transactions']
+      });
+      return {
+        ...wallet,
+
+      };
+    } catch (error) {
+      if (error.name === 'EntityNotFound') {
+        throw new NotFoundException('Wallet not found');
+      } else {
+        throw new Error('Error fetching wallet');
+      }
+    }
+  }
+
+  // OTHER
   async updateWalletBalance(walletId: string): Promise<Wallet> {
     try {
       const wallet = await this.walletRepository.findOneOrFail({
@@ -163,77 +255,7 @@ export class WalletsService {
     }
   }
 
-  async getWalletOne(walletId: string): Promise<Wallet> {
-    try {
-      const wallet = await this.walletRepository.findOneOrFail({
-        where: { id: walletId },
-        relations: ['transactions']
-      });
-      return wallet;
-    } catch (error) {
-      if (error.name === 'EntityNotFound') {
-        throw new NotFoundException('Wallet not found');
-      } else {
-        throw new Error('Error fetching wallet');
-      }
-    }
-  }
-
-  // FIXME: PROBABLEMENTE LO QUITEMOS POR showWallets
-  async getWalletOneAuth(walletId: string, user: User): Promise<Wallet | object> {
-    if (user.roles.includes('admin') || user.isActive) {
-      const wallet = await this.walletRepository.findOne({ where: { id: walletId } });
-      if (wallet) {
-        return wallet;
-      } else {
-        return { message: 'La billetera no existe', status: false };
-      }
-    } else {
-      const wallet = await this.walletRepository.findOne({
-        where: { id: walletId, user: { id: user.id } },
-      });
-
-      if (wallet) {
-        return wallet;
-      } else {
-        return { message: 'La billetera no existe', status: false };
-      }
-    }
-  }
-
-  async overallBalance(user: User) {
-    try {
-      const wallets = await this.walletRepository.find({
-        where: { user: { id: user.id } },
-      });
-
-      let overallBalance = 0;
-
-      wallets.forEach((wallet) => {
-        overallBalance += parseFloat(wallet.balance.toString());
-      });
-
-      return {
-        status: true,
-        total: overallBalance,
-      };
-    } catch (error) {
-      throw new Error('Error retrieving overall balance');
-    }
-  }
-
-  async showWallets(user: User): Promise<Wallet[]> {
-    try {
-      return await this.walletRepository.find({
-        where: { user: { id: user.id } },
-        order: {
-          createDate: "ASC"
-        }
-      });
-    } catch (error) {
-      throw new Error('Error retrieving wallets');
-    }
-  }
+  
 
 
   async containsBalance(wallet: Wallet, amount: number): Promise<boolean> {
