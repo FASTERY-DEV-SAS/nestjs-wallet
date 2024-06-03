@@ -22,7 +22,9 @@ import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ClientProxy, MessagePattern } from '@nestjs/microservices';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Transfers')
 @Controller('transfers')
 export class TransfersController {
   private readonly logger = new Logger(TransfersController.name);
