@@ -19,6 +19,9 @@ export class Wallet {
   @Column({ type: 'text' })
   label_wallet: string;
 
+  @Column({ type: 'text', default: 'USD'})
+  currency: string;
+
   @Column({ type: 'text', nullable: true })
   description_wallet: string;
 
