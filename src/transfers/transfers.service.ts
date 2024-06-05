@@ -117,8 +117,6 @@ export class TransfersService {
     }
   }
 
-
-
   async createIncome(createIncomeDto: CreateIncomeDto, user: User) {
     let amountEntered = createIncomeDto.amount;
     let walletBalanceBefore = 0;
@@ -297,6 +295,7 @@ export class TransfersService {
   }
 
   async allTransfers(user: User, paginationDto: PaginationDto) {
+    console.log('paginationDto:', paginationDto);
     try {
       const month = parseInt(paginationDto.month, 10);
       const year = parseInt(paginationDto.year, 10);
@@ -311,8 +310,6 @@ export class TransfersService {
         .leftJoinAndSelect('transfers.toWallet', 'toWallet')
         .leftJoinAndSelect('transfers.deposit', 'deposit')
         .leftJoinAndSelect('transfers.withdraw', 'withdraw')
-        .leftJoinAndSelect('transfers.revenue', 'revenue')
-        .leftJoinAndSelect('transfers.fee', 'fee')
         .leftJoinAndSelect('transfers.category', 'category')
         .where('fromWallet.user = :userId', { userId: user.id })
         .andWhere('EXTRACT(MONTH FROM transfers.operationDate) = :month', { month })
