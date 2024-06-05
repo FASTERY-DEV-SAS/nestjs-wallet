@@ -21,10 +21,11 @@ async function bootstrap() {
     const config = new DocumentBuilder()
         .setTitle('NESTJS WALLET API')
         .setDescription('The NESTJS WALLET API description')
+        .addBearerAuth()
         .setVersion('1.0')
         .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('', app, document);
+    SwaggerModule.setup('api-docs', app, document);
 
     await app.listen(envs.port);
 
