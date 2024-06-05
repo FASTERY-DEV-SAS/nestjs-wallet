@@ -22,10 +22,12 @@ import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ClientProxy, MessagePattern } from '@nestjs/microservices';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Transfers')
+@ApiBearerAuth()
 @Controller('transfers')
 export class TransfersController {
-  private readonly logger = new Logger(TransfersController.name);
   private isProcessing = false;
   private queue: { createIncomeDto: CreateIncomeDto, user: User }[] = [];
   constructor(

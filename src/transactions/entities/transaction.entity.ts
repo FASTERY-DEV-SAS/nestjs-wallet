@@ -42,10 +42,5 @@ export class Transaction {
 
   @OneToMany(() => Transfer, (transfer) => transfer.withdraw)
   withdrawTransfers: Transfer[];
-
-  @OneToMany(() => Transfer, (transfer) => transfer.revenue)
-  revenueTransfers: Transfer[];
-
-  @OneToMany(() => Transfer, (transfer) => transfer.fee)
-  feeTransfers: Transfer[];
+ 
 }
