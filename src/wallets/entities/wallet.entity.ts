@@ -19,7 +19,7 @@ export class Wallet {
   @Column({ type: 'text' })
   label_wallet: string;
 
-  @Column({ type: 'text', default: 'USD'})
+  @Column({ type: 'text', default: 'USD' })
   currency: string;
 
   @Column({ type: 'text', nullable: true })
@@ -28,10 +28,10 @@ export class Wallet {
   @Column('bool', { default: true })
   isActive: boolean;
 
-  @Column({ type: 'jsonb', nullable: true, default: { currency: 'USD' } })
+  @Column({ type: 'jsonb', nullable: true, default: { currency: 'no meta' } })
   meta: any | null;
 
-  @Column({ type: 'decimal', precision: 6, scale: 2, default: 0 })
+  @Column({ type: 'int', default: 0 })
   balance: number;
 
   @CreateDateColumn({})
@@ -40,15 +40,15 @@ export class Wallet {
   @UpdateDateColumn({})
   updateDate: Date;
 
-  @Column({ type: 'text', nullable: true})
+  @Column({ type: 'text', nullable: true })
   type: string;
 
-  @ManyToOne(() => User, (user) => user.wallet, { eager: true })
+  @ManyToOne(() => User, (user) => user.wallet)
   user: User;
 
   @OneToMany(() => Transaction, (transaction) => transaction.wallet)
   transactions: Transaction[];
-  
+
   @OneToMany(() => Transfer, (transfer) => transfer.fromWallet)
   sentTransfers: Transfer[];
 
