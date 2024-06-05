@@ -75,5 +75,4 @@ export class CreateIncomeDto {
   @IsString()
   @MinLength(3)
   categoryIdSelected: Category['id'];
-
 }
