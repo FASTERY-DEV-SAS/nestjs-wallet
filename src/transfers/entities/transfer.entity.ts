@@ -19,39 +19,45 @@ export class Transfer {
   @Column('text')
   type: string;
 
+  @Column({ type: 'jsonb', nullable: true, default: { description: 'No rates' } })
+  rates: any | null;
+
   @Column({ type: 'jsonb', nullable: true, default: { description: 'No description' } })
   meta: any | null;
 
-  @Column({ type: 'decimal', precision: 6, scale: 2, default: 0 })
-  processed_balance: number;
+  @Column({ type: 'int', nullable: true, default: 0 })
+  amountEntered: number;
+
+  @Column({ type: 'int', nullable: true, default: 0 })
+  walletBalanceBefore: number;
+
+  @Column({ type: 'int', nullable: true, default: 0 })
+  total: number;
+
+  @Column({ type: 'int', nullable: true, default: 0 })
+  walletBalanceAfter: number;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers, { eager: true })
   fromWallet: Wallet;
 
-  @ManyToOne(() => Wallet, (wallet) => wallet.receivedTransfers, { eager: true , nullable: true})
+  @ManyToOne(() => Wallet, (wallet) => wallet.receivedTransfers, { eager: true, nullable: true })
   toWallet: Wallet;
-
+  
   @ManyToOne(() => Transaction, (transaction) => transaction.depositTransfers, { eager: true })
   deposit: Transaction;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers , { eager: true })
+  @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers, { eager: true })
   withdraw: Transaction;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.revenueTransfers , { eager: true })
-  revenue: Transaction;
-
-  @ManyToOne(() => Transaction, (transaction) => transaction.feeTransfers , { eager: true })
-  fee: Transaction;
-
   @ManyToOne(() => Category, (category) => category.categoryTransfers)
-  category:Category;
+  category: Category;
 
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createDate: Date;
-  
+
   // @Column({ type: 'date' })
   // FIXME: QUE SE PUEDA EDITAR ESTA FECHA Y FECHA DE CREACION
   @CreateDateColumn({
