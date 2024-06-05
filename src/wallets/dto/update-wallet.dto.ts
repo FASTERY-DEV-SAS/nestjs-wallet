@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsObject, IsOptional, IsString, MaxLength, MinLength, } from 'class-validator';
 
-
+// FIXME: SE DEBE PODER CAMBAIR EL ESTADO DE LA WALLET
 export class UpdateWalletDto {
     @ApiProperty({
         example: 'My Wallet',
