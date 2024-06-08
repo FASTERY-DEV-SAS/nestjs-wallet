@@ -11,7 +11,7 @@ import { WalletsService } from 'src/wallets/wallets.service';
 @Injectable()
 export class TransactionsService {
   createNewTransaction(
-    walletId: string, // Solo el ID de la cartera
+    walletId: string, 
     amount: number,
     meta: any,
     type: string

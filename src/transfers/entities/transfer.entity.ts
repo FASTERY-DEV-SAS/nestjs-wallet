@@ -7,9 +7,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Rate } from './rate.entity';
 
 @Entity({ name: 'transfers' })
 export class Transfer {
@@ -19,8 +21,8 @@ export class Transfer {
   @Column('text')
   type: string;
 
-  @Column({ type: 'jsonb', nullable: true, default: { description: 'No rates' } })
-  rates: any | null;
+  // @Column({ type: 'jsonb', nullable: true, default: { description: 'No rates' } })
+  // rates: any | null;
 
   @Column({ type: 'jsonb', nullable: true, default: { description: 'No description' } })
   meta: any | null;
@@ -37,20 +39,20 @@ export class Transfer {
   @Column({ type: 'int', nullable: true, default: 0 })
   walletBalanceAfter: number;
 
-  @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers, { eager: true })
+  @ManyToOne(() => Wallet, (wallet) => wallet.sentTransfers, { eager: true, nullable: true })
   fromWallet: Wallet;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.receivedTransfers, { eager: true, nullable: true })
   toWallet: Wallet;
-  
-  @ManyToOne(() => Transaction, (transaction) => transaction.depositTransfers, { eager: true })
-  deposit: Transaction;
 
-  @ManyToOne(() => Transaction, (transaction) => transaction.withdrawTransfers, { eager: true })
-  withdraw: Transaction;
+  @OneToMany(() => Transaction, (transaction) => transaction.transfers, { eager: true , nullable: true})
+  transactions: Transaction[];
 
-  @ManyToOne(() => Category, (category) => category.categoryTransfers)
+  @ManyToOne(() => Category, (category) => category.categoryTransfers, { eager: true })
   category: Category;
+
+  @OneToMany(() => Rate, (rate) => rate.transfer, { eager: true, nullable: true})
+  rates: Rate[];
 
   @CreateDateColumn({
     type: 'timestamp',

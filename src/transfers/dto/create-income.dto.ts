@@ -3,23 +3,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsIn, IsNumber, IsObject, IsOptional, IsPositive, IsString, Matches, MinLength, ValidateNested, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { Category } from 'src/categories/entities/category.entity';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
-export class TransactionDto {
-  @IsString()
-  @IsIn(['tax', 'commission'])
-  type: string;
-
-  @IsString()
-  @IsIn(['income', 'expense'])
-  incomeExpenseType: string;
-
-  @IsString()
-  @IsIn(['percentage', 'fixed'])
-  typeAmount: string;
-
-  @IsNumber()
-  @IsPositive()
-  amount: number;
-}
+import { RateDto } from './rate.dto';
 export class CreateIncomeDto {
   @IsObject()
   @IsOptional()
@@ -46,8 +30,8 @@ export class CreateIncomeDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => TransactionDto)
-  rates: TransactionDto[] | null;
+  @Type(() => RateDto)
+  rates: RateDto[] | null;
   
   @ApiProperty({
     example: '2536',

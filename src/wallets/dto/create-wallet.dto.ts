@@ -10,7 +10,7 @@ export class CreateWalletDto {
   })
   @IsString()
   @MinLength(3)
-  @MaxLength(25)
+  @MaxLength(200)
   label_wallet: string;
 
   @ApiProperty({
@@ -20,7 +20,7 @@ export class CreateWalletDto {
   })
   @IsString()
   @MinLength(3)
-  @MaxLength(50)
+  @MaxLength(200)
   description_wallet: string;
 
   @ApiProperty({
