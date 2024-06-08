@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -16,7 +17,7 @@ export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'int', nullable: true, default: 0 })
   amount: number;
 
   @Column('bool', { default: false })
@@ -37,10 +38,8 @@ export class Transaction {
   @Column('text')
   type: string;
 
-  @OneToMany(() => Transfer, (transfer) => transfer.deposit)
-  depositTransfers: Transfer[];
 
-  @OneToMany(() => Transfer, (transfer) => transfer.withdraw)
-  withdrawTransfers: Transfer[];
+  @ManyToOne(() => Transfer, (transfer) => transfer.transactions)
+  transfers: Transfer[];
  
 }
