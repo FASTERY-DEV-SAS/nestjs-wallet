@@ -114,6 +114,7 @@ export class TransfersService {
       // Confirmar la transacción
       await queryRunner.commitTransaction();
       // return transfer;
+      console.log('transfer:', transfer);
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
       // Revertir la transacción en caso de error
@@ -216,7 +217,8 @@ export class TransfersService {
   }
 
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
-    let amountEntered = createExpenseDto.amount;
+    const { amount, walletIdSelected, rates, categoryIdSelected, meta } = createExpenseDto;
+    let amountEntered = amount;
     let walletBalanceBefore = 0;
     let total = 0;
     let walletBalanceAfter = 0;
@@ -226,13 +228,25 @@ export class TransfersService {
     await queryRunner.startTransaction();
 
     try {
-      const wallet1 = await this.walletsService.canWithdraw(createExpenseDto.walletIdSelected, createExpenseDto.amount, user) as Wallet;
+      const wallet55 = await queryRunner.manager.findOne(Wallet, {
+        where: { id: walletIdSelected },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!wallet55) {
+        throw new BadRequestException('Wallet not found');
+      }
+      const wallet1 = await this.walletsService.canWithdraw(walletIdSelected, amount, user) as Wallet;
       console.log('wallet1:', wallet1);
       walletBalanceBefore = wallet1.balance;
       console.log('amountEntered:', amountEntered);
       console.log('walletBalanceBefore:', walletBalanceBefore);
 
-      total = this.calculateTotal(createExpenseDto.rates, amountEntered);
+      if (rates) {
+        total = this.calculateTotal(rates, amountEntered);
+      } else {
+        total = amountEntered;
+      }
+
       console.log('Total', total);
       walletBalanceAfter = walletBalanceBefore - total;
       console.log('walletBalanceAfter:', walletBalanceAfter);
@@ -250,6 +264,13 @@ export class TransfersService {
 
       // Guardar transacciones
       await queryRunner.manager.save(Transaction, transactionData);
+      let newRate = null;
+      if (rates) {
+        const rateCreate = this.rateRepository.create(rates);
+        const newRate = await this.rateRepository.save(rateCreate);
+      } else {
+        const newRate = null;
+      }
 
       // Crear transferencia
       const transfer = this.transferRepository.create({
@@ -257,7 +278,7 @@ export class TransfersService {
         transactions: transactionData,
         fromWallet: { id: createExpenseDto.walletIdSelected },
         toWallet: null,
-        rates: createExpenseDto.rates,
+        rates: newRate,
         amountEntered,
         walletBalanceBefore,
         total,
@@ -269,9 +290,11 @@ export class TransfersService {
       // Guardar transferencia
       await queryRunner.manager.save(Transfer, transfer);
 
+
       // Confirmar transacción
       await queryRunner.commitTransaction();
-      return transfer;
+      // return transfer;
+      console.log('transfer:', transfer);
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
       await queryRunner.rollbackTransaction();
