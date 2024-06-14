@@ -17,6 +17,5 @@ export class RateDto {
   typeRate: string;
 
   @IsNumber()
-  @IsPositive()
   value: number;
 }
