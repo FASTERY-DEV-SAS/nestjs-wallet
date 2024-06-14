@@ -92,7 +92,6 @@ export class TransfersService {
       } else {
         newRate = null;
       }
-      console.log('newRate:', newRate);
 
       // Crear el objeto Transfer
       const transfer = this.transferRepository.create({
@@ -266,9 +265,9 @@ export class TransfersService {
       let newRate = null;
       if (rates) {
         const rateCreate = this.rateRepository.create(rates);
-        const newRate = await this.rateRepository.save(rateCreate);
+        newRate = await this.rateRepository.save(rateCreate);
       } else {
-        const newRate = null;
+        newRate = null;
       }
 
       // Crear transferencia
