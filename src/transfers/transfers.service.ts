@@ -58,7 +58,6 @@ export class TransfersService {
       }
       console.log('wallet55:', wallet55);
       const wallet1 = await this.walletsService.canWithdraw(createIncomeDto.walletIdSelected, 0, user) as Wallet;
-      console.log('wallet1:', wallet1);
       walletBalanceBefore = wallet1.balance;
       console.log('amountEntered:', amountEntered);
       console.log('walletBalanceBefore:', walletBalanceBefore);
@@ -89,10 +88,11 @@ export class TransfersService {
       let newRate = null;
       if (rates) {
         const rateCreate = this.rateRepository.create(rates);
-        const newRate = await this.rateRepository.save(rateCreate);
+        newRate = await this.rateRepository.save(rateCreate);
       } else {
-        const newRate = null;
+        newRate = null;
       }
+      console.log('newRate:', newRate);
 
       // Crear el objeto Transfer
       const transfer = this.transferRepository.create({
@@ -114,7 +114,7 @@ export class TransfersService {
       // Confirmar la transacción
       await queryRunner.commitTransaction();
       // return transfer;
-      console.log('transfer:', transfer);
+      // console.log('transfer:', transfer);
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
       // Revertir la transacción en caso de error
@@ -236,7 +236,6 @@ export class TransfersService {
         throw new BadRequestException('Wallet not found');
       }
       const wallet1 = await this.walletsService.canWithdraw(walletIdSelected, amount, user) as Wallet;
-      console.log('wallet1:', wallet1);
       walletBalanceBefore = wallet1.balance;
       console.log('amountEntered:', amountEntered);
       console.log('walletBalanceBefore:', walletBalanceBefore);
@@ -294,7 +293,7 @@ export class TransfersService {
       // Confirmar transacción
       await queryRunner.commitTransaction();
       // return transfer;
-      console.log('transfer:', transfer);
+      // console.log('transfer:', transfer);
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
       await queryRunner.rollbackTransaction();
