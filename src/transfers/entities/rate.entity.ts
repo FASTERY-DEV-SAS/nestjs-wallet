@@ -21,6 +21,9 @@ export class Rate {
   @Column('text')
   type: string;
 
+  @Column('text', { nullable: true })
+  subType: string;
+
   @Column('text')
   incomeExpenseType: string;
 

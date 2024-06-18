@@ -23,6 +23,7 @@ import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { ClientProxy, MessagePattern } from '@nestjs/microservices';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { PaginationRateDto } from './dto/pagination-rate.dto';
 
 @ApiTags('Transfers')
 @ApiBearerAuth()
@@ -59,9 +60,17 @@ export class TransfersController {
     return this.transfersService.allTransfers(user, paginationDto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.transfersService.findOne(id);
+  @Get('rates')
+  @Auth(ValidRoles.user)
+  showRates(@GetUser() user: User, @Query() paginationRateDto: PaginationRateDto) {
+    return this.transfersService.showRates(user, paginationRateDto);
   }
+
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.transfersService.findOne(id);
+  // }
+
+ 
 
 }
