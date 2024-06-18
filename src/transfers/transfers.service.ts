@@ -15,6 +15,7 @@ import { retry } from 'rxjs';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
 import { RateDto } from './dto/rate.dto';
 import { Rate } from './entities/rate.entity';
+import { PaginationRateDto } from './dto/pagination-rate.dto';
 
 @Injectable()
 export class TransfersService {
@@ -398,6 +399,67 @@ export class TransfersService {
       return {};
     }
 
+  }
+
+  async showRates(user: User, paginationRateDto: PaginationRateDto) {
+    const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
+    try {
+      // Consulta para obtener la suma de los valores
+      const totalValueQuery = this.rateRepository.createQueryBuilder('rates')
+        .leftJoin('rates.transfer', 'transfer')
+        .leftJoin('transfer.fromWallet', 'fromWallet')
+        .leftJoin('transfer.toWallet', 'toWallet')
+        .select('SUM(rates.value)', 'total')
+        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month: parseInt(month) })
+        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year: parseInt(year) })
+        .andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId });
+
+      if (type) {
+        totalValueQuery.andWhere('rates.type = :type', { type });
+      }
+
+      if (subType) {
+        totalValueQuery.andWhere('rates.subType = :subType', { subType });
+      }
+
+
+      const totalValueResult = await totalValueQuery.getRawOne();
+
+      // Consulta para obtener los detalles de las tasas con el ID de la transferencia
+      const ratesQuery = this.rateRepository.createQueryBuilder('rates')
+        .leftJoin('rates.transfer', 'transfer')
+        .leftJoin('transfer.fromWallet', 'fromWallet')
+        .leftJoin('transfer.toWallet', 'toWallet')
+        .select(['rates', 'transfer.id']) // Seleccionar 'rates' y 'transfer.id'
+        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month: parseInt(month) })
+        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year: parseInt(year) })
+        .andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId })
+        .orderBy('rates.createAt', 'DESC')
+        .skip(offset || 0)
+        .take(limit || 10); // Agregar valor predeterminado para limit
+
+      if (type) {
+        ratesQuery.andWhere('rates.type = :type', { type });
+      }
+
+      if (subType) {
+        ratesQuery.andWhere('rates.subType = :subType', { subType });
+      }
+
+      const rates = await ratesQuery.getMany();
+
+      return {
+        total: rates.length,
+        totalValue: totalValueResult.total || 0,
+        rates: rates.map(rate => ({
+          ...rate,
+          transferId: rate.transfer.id // Agregar el ID de la transferencia a cada tasa
+        })),
+      };
+    } catch (error) {
+      console.error('Error al obtener tasas:', error);
+      return { message: `Error al obtener tasas: ${error.message}` };
+    }
   }
 
 }

@@ -13,6 +13,9 @@ export class RateDto {
   incomeExpenseType: string;
 
   @IsString()
+  subType: string;
+
+  @IsString()
   @IsIn(['percentage', 'fixed'])
   typeRate: string;
 
