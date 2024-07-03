@@ -449,16 +449,20 @@ export class TransfersService {
       const rates = await ratesQuery.getMany();
 
       return {
-        total: rates.length,
-        totalValue: totalValueResult.total || 0,
+        statusCode: HttpStatus.OK,
+        totalAmount: totalValueResult.total || 0,
         rates: rates.map(rate => ({
           ...rate,
-          transferId: rate.transfer.id // Agregar el ID de la transferencia a cada tasa
+          transferId: rate.transfer.id
         })),
+        message: 'Tasas obtenidas con éxito'
       };
     } catch (error) {
-      console.error('Error al obtener tasas:', error);
-      return { message: `Error al obtener tasas: ${error.message}` };
+      return {
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Error al obtener tasas',
+        error: error.message,
+      };
     }
   }
 
