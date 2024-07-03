@@ -66,10 +66,10 @@ export class TransfersController {
     return this.transfersService.showRates(user, paginationRateDto);
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.transfersService.findOne(id);
-  // }
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.transfersService.findOne(id);
+  }
 
  
 
