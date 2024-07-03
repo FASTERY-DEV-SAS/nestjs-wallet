@@ -451,10 +451,10 @@ export class TransfersService {
       return {
         statusCode: HttpStatus.OK,
         totalAmount: totalValueResult.total || 0,
-        rates: rates.map(rate => ({
+        rates: [rates.map(rate => ({
           ...rate,
           transferId: rate.transfer.id
-        })),
+        }))],
         message: 'Tasas obtenidas con éxito'
       };
     } catch (error) {
