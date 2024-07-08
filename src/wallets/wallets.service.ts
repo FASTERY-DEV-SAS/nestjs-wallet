@@ -120,15 +120,20 @@ export class WalletsService {
       }
     }
   }
-
-  async showWallets(user: User): Promise<Wallet[]> {
+  // USER+
+  async showWallets(user: User) {
     try {
-      return await this.walletRepository.find({
-        where: { user: { id: user.id }, isActive: true },
+      const wallets = await this.walletRepository.find({
+        where: { user: { id: user.id }},
         order: {
-          createDate: "ASC"
+          balance: 'DESC'
         }
       });
+      return {
+        wallets,
+        statusCode: HttpStatus.OK,
+        message: 'Billeteras del usuario',
+      }
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -214,7 +219,7 @@ export class WalletsService {
       throw new Error('Error updating wallet balance');
     }
   }
-  
+
   // TODO: CREAR IM JOBS PARA CREAR INFORMES DE BALANCE
   async validateWalletBalance(walletId: string) {
     try {
@@ -259,7 +264,7 @@ export class WalletsService {
     }
   }
 
-  
+
 
   async getWalletAndTransactions(walletId: string): Promise<Wallet> {
     try {
