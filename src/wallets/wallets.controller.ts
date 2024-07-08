@@ -24,23 +24,23 @@ import { ApiBasicAuth, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class WalletsController {
 
   constructor(private readonly walletsService: WalletsService) { }
-  // USER
+  // USER+
   @Post('createWallet')
   @Auth(ValidRoles.user, ValidRoles.admin)
   create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
     return this.walletsService.createWallet(createWalletDto, user);
   }
 
-  @Patch(':id')
+  @Patch('updateWallet/:id')
   @Auth(ValidRoles.user, ValidRoles.admin)
-  update(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
+  updateWallet(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
     return this.walletsService.updateWallet(id, updateWalletDto);
   }
 
-  @Get('getOneWallet/:id')
+  @Get('getWallet/:id')
   @Auth(ValidRoles.user)
-  findOne(@Param('id') id: string, @GetUser() user: User) {
-    return this.walletsService.getOneWallet(id, user);
+  getWallet(@Param('id') id: string, @GetUser() user: User) {
+    return this.walletsService.getWallet(id, user);
   }
 
   @Get('overallBalance')
