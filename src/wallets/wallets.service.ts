@@ -9,12 +9,12 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 @Injectable()
 export class WalletsService {
   private readonly logger = new Logger(WalletsService.name);
-  private walletExistenceCache: Map<string, boolean> = new Map();
 
   constructor(
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
   ) { }
+
   // USER
   async createWallet(createWalletDto: CreateWalletDto, user: User): Promise<{
     statusCode: number;
@@ -40,6 +40,7 @@ export class WalletsService {
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
+        this.logger.error(error.message);
         throw error;
       } else {
         throw new InternalServerErrorException(
@@ -49,6 +50,7 @@ export class WalletsService {
     }
   }
 
+  // USER+
   async updateWallet(id: string, updateWalletDto: UpdateWalletDto): Promise<{
     statusCode: number;
     message: string;
@@ -73,13 +75,13 @@ export class WalletsService {
     }
   }
 
-  async getOneWallet(walletId: string, user: User) {
+  async getWallet(walletId: string, user: User) {
     try {
       const wallet = await this.walletRepository.findOne({ where: { id: walletId, user: { id: user.id }, isActive: true } });
-      if (wallet) {
-        return wallet;
-      } else {
-        return { message: 'La billetera no existe', statusCode: HttpStatus.NOT_FOUND };
+      return {
+        wallet,
+        statusCode: HttpStatus.OK,
+        message: 'Billetera del usuario',
       }
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -124,7 +126,7 @@ export class WalletsService {
   async showWallets(user: User) {
     try {
       const wallets = await this.walletRepository.find({
-        where: { user: { id: user.id }},
+        where: { user: { id: user.id } },
         order: {
           balance: 'DESC'
         }
