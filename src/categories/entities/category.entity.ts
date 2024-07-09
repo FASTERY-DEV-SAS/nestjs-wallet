@@ -23,6 +23,9 @@ export class Category {
     @Column('text',{ nullable: false })
     type: string;
 
+    @Column('bool', { default: true })
+    isActive: boolean;
+
     @Column('text',{ nullable: false })
     description: string;
     
