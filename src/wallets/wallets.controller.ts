@@ -15,7 +15,6 @@ import { User } from 'src/auth/entities/user.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
-import { MessagePattern, Payload } from '@nestjs/microservices';
 import { ApiBasicAuth, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Wallets')
@@ -55,7 +54,6 @@ export class WalletsController {
     return this.walletsService.showWallets(user);
   }
 
-  // FIXME: PROTEGER RUTA
   // ADMIN
   @Get('updateWalletBalance/:id')
   updateWalletBalance(@Param('id') id: string) {
