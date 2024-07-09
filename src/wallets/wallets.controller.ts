@@ -48,10 +48,10 @@ export class WalletsController {
     return this.walletsService.getTotalAmountOfWallets(user);
   }
   // USER+
-  @Get('showWallets')
+  @Get('getWallets')
   @Auth(ValidRoles.user)
-  showWallets(@GetUser() user: User) {
-    return this.walletsService.showWallets(user);
+  getWallets(@GetUser() user: User) {
+    return this.walletsService.getWallets(user);
   }
 
   // ADMIN
