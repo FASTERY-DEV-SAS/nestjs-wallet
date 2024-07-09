@@ -54,4 +54,12 @@ export class UpdateWalletDto {
     @IsIn(["regular", "saving", "current"])
     @IsOptional()
     type: string;
+
+    @ApiProperty({
+        example: false,
+        description: 'The status of the wallet.',
+        nullable: false,
+    })
+    @IsOptional()
+    isActive: boolean;
 }
