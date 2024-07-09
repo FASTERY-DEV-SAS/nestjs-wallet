@@ -123,7 +123,7 @@ export class WalletsService {
     }
   }
   // USER+
-  async showWallets(user: User) {
+  async getWallets(user: User) {
     try {
       const wallets = await this.walletRepository.find({
         where: { user: { id: user.id } },
