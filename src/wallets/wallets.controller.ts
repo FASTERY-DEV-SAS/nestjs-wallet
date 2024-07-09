@@ -36,7 +36,7 @@ export class WalletsController {
     return this.walletsService.updateWallet(id, updateWalletDto);
   }
 
-  @Get('getWallet/:id')
+  @Get('getOneWallet/:id')
   @Auth(ValidRoles.user)
   getWallet(@Param('id') id: string, @GetUser() user: User) {
     return this.walletsService.getWallet(id, user);
