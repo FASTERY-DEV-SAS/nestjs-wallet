@@ -405,7 +405,6 @@ export class TransfersService {
     const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
     console.log('paginationRateDto:', paginationRateDto);
     try {
-      // Consulta para obtener la suma de los valores
       const totalValueQuery = this.rateRepository.createQueryBuilder('rates')
         .leftJoin('rates.transfer', 'transfer')
         .leftJoin('transfer.fromWallet', 'fromWallet')
@@ -430,10 +429,9 @@ export class TransfersService {
 
       // Consulta para obtener los detalles de las tasas con el ID de la transferencia
       const ratesQuery = this.rateRepository.createQueryBuilder('rates')
-        .leftJoin('rates.transfer', 'transfer')
-        .leftJoin('transfer.fromWallet', 'fromWallet')
-        .leftJoin('transfer.toWallet', 'toWallet')
-        .select(['rates', 'transfer.id']) // Seleccionar 'rates' y 'transfer.id'
+        .leftJoinAndSelect('rates.transfer', 'transfer')
+        .leftJoinAndSelect('transfer.fromWallet', 'fromWallet')
+        .leftJoinAndSelect('transfer.toWallet', 'toWallet')
         .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month })
         .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year });
 
@@ -449,20 +447,16 @@ export class TransfersService {
         ratesQuery.andWhere('rates.subType = :subType', { subType });
       }
 
-      ratesQuery
-        .orderBy('rates.createAt', 'DESC')
+      ratesQuery.orderBy('rates.createAt', 'DESC')
         .skip(offset || 0)
-        .take(limit || 10); // Agregar valor predeterminado para limit
+        .take(limit || 10);
 
       const rates = await ratesQuery.getMany();
 
       return {
         statusCode: HttpStatus.OK,
         totalAmount: totalValueResult.total || 0,
-        rates: rates.map(rate => ({
-          ...rate,
-          transferId: rate.transfer.id
-        })),
+        rates,
         message: 'Tasas obtenidas con éxito'
       };
     } catch (error) {
