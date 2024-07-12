@@ -60,10 +60,10 @@ export class TransfersController {
     return this.transfersService.allTransfers(user, paginationDto);
   }
 
-  @Get('rates')
+  @Get('getRates')
   @Auth(ValidRoles.user)
-  showRates(@GetUser() user: User, @Query() paginationRateDto: PaginationRateDto) {
-    return this.transfersService.showRates(user, paginationRateDto);
+  getRates(@GetUser() user: User, @Query() paginationRateDto: PaginationRateDto) {
+    return this.transfersService.getRates(user, paginationRateDto);
   }
 
   @Get(':id')

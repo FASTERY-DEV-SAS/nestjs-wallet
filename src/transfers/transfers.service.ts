@@ -401,7 +401,7 @@ export class TransfersService {
 
   }
 
-  async showRates(user: User, paginationRateDto: PaginationRateDto) {
+  async getRates(user:User, paginationRateDto: PaginationRateDto) {
     const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
     try {
       // Consulta para obtener la suma de los valores
