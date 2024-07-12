@@ -401,8 +401,9 @@ export class TransfersService {
 
   }
 
-  async getRates(user:User, paginationRateDto: PaginationRateDto) {
+  async getRates(user: User, paginationRateDto: PaginationRateDto) {
     const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
+    console.log('paginationRateDto:', paginationRateDto);
     try {
       // Consulta para obtener la suma de los valores
       const totalValueQuery = this.rateRepository.createQueryBuilder('rates')
@@ -410,9 +411,12 @@ export class TransfersService {
         .leftJoin('transfer.fromWallet', 'fromWallet')
         .leftJoin('transfer.toWallet', 'toWallet')
         .select('SUM(rates.value)', 'total')
-        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month: parseInt(month) })
-        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year: parseInt(year) })
-        .andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId });
+        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month })
+        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year });
+
+      if (walletId !== 'all') {
+        totalValueQuery.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId });
+      }
 
       if (type) {
         totalValueQuery.andWhere('rates.type = :type', { type });
@@ -422,7 +426,6 @@ export class TransfersService {
         totalValueQuery.andWhere('rates.subType = :subType', { subType });
       }
 
-
       const totalValueResult = await totalValueQuery.getRawOne();
 
       // Consulta para obtener los detalles de las tasas con el ID de la transferencia
@@ -431,12 +434,12 @@ export class TransfersService {
         .leftJoin('transfer.fromWallet', 'fromWallet')
         .leftJoin('transfer.toWallet', 'toWallet')
         .select(['rates', 'transfer.id']) // Seleccionar 'rates' y 'transfer.id'
-        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month: parseInt(month) })
-        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year: parseInt(year) })
-        .andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId })
-        .orderBy('rates.createAt', 'DESC')
-        .skip(offset || 0)
-        .take(limit || 10); // Agregar valor predeterminado para limit
+        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month })
+        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year });
+
+      if (walletId !== 'all') {
+        ratesQuery.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId });
+      }
 
       if (type) {
         ratesQuery.andWhere('rates.type = :type', { type });
@@ -445,6 +448,11 @@ export class TransfersService {
       if (subType) {
         ratesQuery.andWhere('rates.subType = :subType', { subType });
       }
+
+      ratesQuery
+        .orderBy('rates.createAt', 'DESC')
+        .skip(offset || 0)
+        .take(limit || 10); // Agregar valor predeterminado para limit
 
       const rates = await ratesQuery.getMany();
 
@@ -465,5 +473,6 @@ export class TransfersService {
       };
     }
   }
+
 
 }

@@ -12,21 +12,18 @@ export class PaginationRateDto {
   @Type(() => Number)
   offset?: number;
 
-  @IsString()
   @IsOptional()
-  month: string;
+  @Type(() => Number)
+  month: number;
 
-  @IsString()
+  @Type(() => Number)
   @IsOptional()
-  year: string;
+  year: number;
 
   @IsString()
   @IsOptional()
   walletId: string;
 
-  @IsString()
-  @IsOptional()
-  categoryId: string;
 
   @IsString()
   @IsOptional()
