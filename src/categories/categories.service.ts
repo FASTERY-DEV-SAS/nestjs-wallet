@@ -33,7 +33,7 @@ export class CategoriesService {
         categoryId: newCategory.id,
       };
     } catch (error) {
-      this.logger.error(`Error in createCategory`);
+      this.logger.error(`Error in createCategory`, error.stack);
       if (error instanceof BadRequestException) {
         error.message || 'Error en crear la categoria';
       } else {

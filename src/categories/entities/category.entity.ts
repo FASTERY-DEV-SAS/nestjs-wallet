@@ -12,31 +12,31 @@ import {
 
 @Entity({ name: 'categories' })
 export class Category {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
- 
-    @Column('text',{nullable:true})
-    name: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column('text')
-    type: string;
+  @Column('text', { nullable: true })
+  name: string;
 
-    @Column('bool')
-    isActive: boolean;
+  @Column('text')
+  type: string;
 
-    @Column('text')
-    description: string;
-    
-    @CreateDateColumn({})
-    createAt: Date;
+  @Column('bool', { default: true })
+  isActive: boolean;
 
-    @UpdateDateColumn({})
-    updateAt: Date;
+  @Column('text')
+  description: string;
 
-    @ManyToOne(() => User, (user) => user.categories)
-    user: User;
+  @CreateDateColumn({})
+  createAt: Date;
 
-    @OneToMany(() => Transfer, (transfer) => transfer.category)
-    transfers:Transfer[];
+  @UpdateDateColumn({})
+  updateAt: Date;
+
+  @ManyToOne(() => User, (user) => user.categories)
+  user: User;
+
+  @OneToMany(() => Transfer, (transfer) => transfer.category)
+  transfers: Transfer[];
 }
 

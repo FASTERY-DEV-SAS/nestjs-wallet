@@ -3,6 +3,7 @@ import {
   HttpStatus,
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -16,13 +17,14 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger('AuthService');
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<{ statusCode: number; message: string }> {
+  async register(createUserDto: CreateUserDto): Promise<{ statusCode: number; message: string }> {
     try {
       const { password, ...userData } = createUserDto;
       const user = this.userRepository.create({
@@ -36,11 +38,12 @@ export class AuthService {
         message: 'Usuario registrado con éxito.',
       };
     } catch (error) {
+      this.logger.error(`Error in register ${createUserDto.userName}`);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al registrar el usuario.';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al registrar el usuario.',
+          error.message || 'Ocurrió un error al registrar el usuario.',
         );
       }
     }
@@ -51,26 +54,26 @@ export class AuthService {
       const { password, email } = loginUserDto;
       const user = await this.userRepository.findOne({
         where: { email },
-        select: { email: true, password: true, id: true },
+        select: { email: true, password: true, id: true, userName: true },
       });
-  
-      if (!user) throw new UnauthorizedException('Invalid credentials (email)');
-  
+
+      if (!user) throw new UnauthorizedException('Credenciales inválidas (email)');
+
       if (!bcrypt.compareSync(password, user.password))
-        throw new UnauthorizedException('Invalid credentials (password)');
+        throw new UnauthorizedException('Credeciales inválidas (password)');
       delete user.password;
-      console.log(user);
       return {
         statusCode: HttpStatus.OK,
         ...user,
         token: this.getJwtToken({ id: user.id }),
       };
     } catch (error) {
+      this.logger.error(`Error in login ${loginUserDto.email}`);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al registrar el usuario.';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al registrar el usuario.',
+          error.message || 'Ocurrió un error al registrar el usuario.',
         );
       }
     }
@@ -88,10 +91,4 @@ export class AuthService {
     return token;
   }
 
-  private handleDBError(error: any): never {
-    if (error.code === '23505') throw new BadRequestException(error.detail);
-    throw new InternalServerErrorException(
-      'Check server logs for more details',
-    );
-  }
 }

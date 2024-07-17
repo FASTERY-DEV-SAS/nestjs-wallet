@@ -75,7 +75,7 @@ export class WalletsService {
     }
   }
   // USER++
-  async getOneWallet(walletId: string, user: User): Promise<{
+  async getWallet(walletId: string, user: User): Promise<{
     wallet: Wallet;
     statusCode: HttpStatus;
     message: string;
