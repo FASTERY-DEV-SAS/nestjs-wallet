@@ -1,11 +1,9 @@
-import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateTransferDto } from './dto/create-transfer.dto';
 import { UpdateTransferDto } from './dto/update-transfer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { DataSource, QueryRunner, Repository } from 'typeorm';
+import { DataSource, MoreThanOrEqual, QueryRunner, Repository } from 'typeorm';
 import { Transfer } from './entities/transfer.entity';
-import { TransactionsService } from 'src/transactions/transactions.service';
 import { WalletsService } from 'src/wallets/wallets.service';
 import { User } from 'src/auth/entities/user.entity';
 import { CreateIncomeDto } from './dto/create-income.dto';
@@ -19,15 +17,11 @@ import { PaginationRateDto } from './dto/pagination-rate.dto';
 
 @Injectable()
 export class TransfersService {
+  private readonly logger = new Logger('TransfersService');
   constructor(
-    @Inject(TransactionsService)
-    private readonly transactionsService: TransactionsService,
 
     @Inject(WalletsService)
     private readonly walletsService: WalletsService,
-
-    @InjectRepository(Transaction)
-    private readonly transactionRepository: Repository<Transaction>,
 
     @InjectRepository(Rate)
     private readonly rateRepository: Repository<Rate>,
@@ -37,9 +31,8 @@ export class TransfersService {
 
     private readonly dataSource: DataSource,
   ) { }
-
+  // USER
   async createIncome(createIncomeDto: CreateIncomeDto, user: User) {
-    const { amount, walletIdSelected, rates, categoryIdSelected, meta } = createIncomeDto;
     let amountEntered = createIncomeDto.amount;
     let walletBalanceBefore = 0;
     let total = 0;
@@ -48,57 +41,41 @@ export class TransfersService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    console.log('amountEntered:', amountEntered);
 
     try {
-      const wallet55 = await queryRunner.manager.findOne(Wallet, {
-        where: { id: walletIdSelected },
+      const wallet = await queryRunner.manager.findOne(Wallet, {
+        where: { id: createIncomeDto.walletIdSelected, user: { id: user.id }, isActive: true },
         lock: { mode: 'pessimistic_write' },
       });
-      if (!wallet55) {
-        throw new BadRequestException('Wallet not found');
+
+      if (!wallet) {
+        throw new NotFoundException('Wallet not found');
       }
-      console.log('wallet55:', wallet55);
-      const wallet1 = await this.walletsService.canWithdraw(createIncomeDto.walletIdSelected, 0, user) as Wallet;
-      walletBalanceBefore = wallet1.balance;
-      console.log('amountEntered:', amountEntered);
+
+      walletBalanceBefore = wallet.balance;
       console.log('walletBalanceBefore:', walletBalanceBefore);
 
-      if (rates) {
-        total = this.calculateTotal(rates, amountEntered);
+      if (createIncomeDto.rates) {
+        total = this.calculateTotal(createIncomeDto.rates, amountEntered);
       } else {
         total = amountEntered;
       }
-      console.log('Total', total);
+      console.log('Total:', total);
       walletBalanceAfter = walletBalanceBefore + total;
       console.log('walletBalanceAfter:', walletBalanceAfter);
 
+      await queryRunner.manager.update(Wallet, createIncomeDto.walletIdSelected, { balance: walletBalanceAfter });
 
-
-      // Actualizar el saldo de la cartera
-      await this.updateWalletBalance(queryRunner, createIncomeDto.walletIdSelected, walletBalanceAfter);
-
-      // Crear las transacciones en paralelo
-      const transactionPromises = [
-        this.transactionsService.createNewTransaction(createIncomeDto.walletIdSelected, total, createIncomeDto.meta, "deposit"),
-      ];
-
-      const transactionData = await Promise.all(transactionPromises);
-
-      // Guardar las transacciones en la base de datos
-      await queryRunner.manager.save(Transaction, transactionData);
       let newRate = null;
-      if (rates) {
-        const rateCreate = this.rateRepository.create(rates);
-        newRate = await this.rateRepository.save(rateCreate);
-      } else {
-        newRate = null;
+      if (createIncomeDto.rates) {
+        const rateCreate = queryRunner.manager.create(Rate, createIncomeDto.rates);
+        newRate = await queryRunner.manager.save(Rate, rateCreate);
       }
 
-      // Crear el objeto Transfer
-      const transfer = this.transferRepository.create({
+      const transfer = queryRunner.manager.create(Transfer, {
         type: 'income',
-        transactions: transactionData,
-        fromWallet: { id: createIncomeDto.walletIdSelected } as Wallet,
+        wallet: { id: createIncomeDto.walletIdSelected },
         toWallet: null,
         rates: newRate,
         amountEntered,
@@ -108,117 +85,31 @@ export class TransfersService {
         category: { id: createIncomeDto.categoryIdSelected },
       });
 
-      // Guardar el objeto Transfer en la base de datos
       await queryRunner.manager.save(Transfer, transfer);
 
-      // Confirmar la transacción
       await queryRunner.commitTransaction();
-      // return transfer;
-      // console.log('transfer:', transfer);
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
-      // Revertir la transacción en caso de error
+      console.error('Error in createIncome:', error);
       await queryRunner.rollbackTransaction();
-      console.error(error);
+
       if (error instanceof BadRequestException) {
         throw error;
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al realizar la transferencia',
+          error.message || 'Ocurrió un error al realizar la transferencia',
         );
       }
     } finally {
-      // Liberar el queryRunner
       await queryRunner.release();
     }
   }
 
-  async transferWalletToWallet(createTransferDto: CreateTransferDto, user: User) {
-    try {
-      // Validar la cantidad de la transferencia
+  // transferWalletToWallet
 
-      // Obtener la billetera de origen
-      const fromWallet = await this.walletsService.getWalletOne(createTransferDto.fromWalletId);
-
-      // Verificar que la billetera de origen tenga suficiente saldo para la transferencia
-      await this.walletsService.containsBalance(fromWallet, createTransferDto.amount);
-
-      // Obtener la billetera de destino
-      const toWallet = await this.walletsService.getWalletOne(createTransferDto.toWalletId);
-
-      // Iniciar una transacción
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-
-        const processedBalancefromWallet = +fromWallet.balance - +createTransferDto.amount - +createTransferDto.fee + +createTransferDto.revenue;
-        console.log('previousBalance:', processedBalancefromWallet);
-
-        // Actualizar el saldo de la cartera
-        await this.updateWalletBalance(queryRunner, fromWallet.id, processedBalancefromWallet);
-
-        const processedBalancetoWallet = +toWallet.balance + +createTransferDto.amount;
-        console.log('previousBalance:', processedBalancetoWallet);
-
-        await this.updateWalletBalance(queryRunner, toWallet.id, processedBalancetoWallet);
-
-
-        // Crear todas las transacciones de forma paralela
-        const transactionsCreationPromises = [
-          this.transactionsService.createNewTransaction(
-            createTransferDto.fromWalletId,
-            createTransferDto.amount * -1,
-            "withdrawTransaction",
-            "withdraw"
-          ),
-          this.transactionsService.createNewTransaction(
-            createTransferDto.toWalletId,
-            createTransferDto.amount,
-            "depositTransaction",
-            "deposit"
-          )
-        ];
-
-        const transactionData = await Promise.all(transactionsCreationPromises);
-
-        // Guardar las transacciones en la base de datos
-        await queryRunner.manager.save(Transaction, transactionData);
-
-        // Crear el objeto Transfer
-        const transfer = this.transferRepository.create({
-          type: 'transfer',
-          transactions: transactionData,
-          fromWallet: fromWallet,
-          toWallet: toWallet,
-        });
-
-        // Guardar la transferencia en la base de datos
-        await queryRunner.manager.save(Transfer, transfer);
-
-        // Confirmar la transacción
-        await queryRunner.commitTransaction();
-
-        // Devolver mensaje de éxito
-        return { message: 'Transferencia realizada con éxito', status: true, transferId: transfer.id };
-      } catch (error) {
-        // Revertir la transacción en caso de error
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        // Liberar recursos
-        await queryRunner.release();
-      }
-    } catch (error) {
-      // Devolver mensaje de error
-      return { message: 'Error al realizar la transferencia', status: false };
-    }
-  }
-
+  // USER
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
-    const { amount, walletIdSelected, rates, categoryIdSelected, meta } = createExpenseDto;
-    let amountEntered = amount;
+    let amountEntered = createExpenseDto.amount;
     let walletBalanceBefore = 0;
     let total = 0;
     let walletBalanceAfter = 0;
@@ -226,92 +117,68 @@ export class TransfersService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+    console.log('amountEntered:', amountEntered);
 
     try {
-      const wallet55 = await queryRunner.manager.findOne(Wallet, {
-        where: { id: walletIdSelected },
-        lock: { mode: 'pessimistic_write' },
-      });
-      if (!wallet55) {
-        throw new BadRequestException('Wallet not found');
-      }
-      const wallet1 = await this.walletsService.canWithdraw(walletIdSelected, amount, user) as Wallet;
-      walletBalanceBefore = wallet1.balance;
-      console.log('amountEntered:', amountEntered);
-      console.log('walletBalanceBefore:', walletBalanceBefore);
-
-      if (rates) {
-        total = this.calculateTotal(rates, amountEntered);
+      if (createExpenseDto.rates) {
+        total = this.calculateTotal(createExpenseDto.rates, amountEntered);
       } else {
         total = amountEntered;
       }
-
       console.log('Total', total);
+      const wallet = await queryRunner.manager.findOne(Wallet, {
+        where: { id: createExpenseDto.walletId, user: { id: user.id }, isActive: true, balance: MoreThanOrEqual(total) },
+        lock: { mode: 'pessimistic_read' },
+      });
+      if (!wallet.id) {
+        throw new NotFoundException('Wallet not found');
+      }
+      walletBalanceBefore = wallet.balance;
+      console.log('walletBalanceBefore:', walletBalanceBefore);
+
       walletBalanceAfter = walletBalanceBefore - total;
       console.log('walletBalanceAfter:', walletBalanceAfter);
+      await queryRunner.manager.update(Wallet, createExpenseDto.walletId, { balance: walletBalanceAfter });
 
-      // Actualizar saldo de la cartera
-      await this.updateWalletBalance(queryRunner, createExpenseDto.walletIdSelected, walletBalanceAfter);
 
-      // Crear transacciones en paralelo
-      const transactionPromises = [
-        this.transactionsService.createNewTransaction(createExpenseDto.walletIdSelected, total, createExpenseDto.meta, "withdraw"),
-        // this.transactionsService.createNewTransaction(createExpenseDto.walletIdSelected, 0, { description: 'No description' }, "deposit"),
-      ];
-
-      const transactionData = await Promise.all(transactionPromises);
-
-      // Guardar transacciones
-      await queryRunner.manager.save(Transaction, transactionData);
       let newRate = null;
-      if (rates) {
-        const rateCreate = this.rateRepository.create(rates);
-        newRate = await this.rateRepository.save(rateCreate);
-      } else {
-        newRate = null;
+      if (createExpenseDto.rates) {
+        const rateCreate = queryRunner.manager.create(Rate, createExpenseDto.rates);
+        newRate = await queryRunner.manager.save(Rate, rateCreate);
       }
-
       // Crear transferencia
-      const transfer = this.transferRepository.create({
+      const transfer = queryRunner.manager.create(Transfer, {
         type: 'expense',
-        transactions: transactionData,
-        fromWallet: { id: createExpenseDto.walletIdSelected },
-        toWallet: null,
+        wallet: { id: createExpenseDto.walletId },
         rates: newRate,
         amountEntered,
         walletBalanceBefore,
         total,
         walletBalanceAfter,
-        category: { id: createExpenseDto.categoryIdSelected },
-        // FIXME: Solo debe ser caregorias de gastos
+        category: { id: createExpenseDto.categoryId },
       });
-
       // Guardar transferencia
       await queryRunner.manager.save(Transfer, transfer);
 
-
-      // Confirmar transacción
       await queryRunner.commitTransaction();
-      // return transfer;
-      // console.log('transfer:', transfer);
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
+      this.logger.error('Error in createExpense');
       await queryRunner.rollbackTransaction();
       console.error(error);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al realizar la transferencia';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al realizar la transferencia',
+          error.message || 'Ocurrió un error al realizar la transferencia',
         );
       }
     } finally {
-      // Liberar recursos
       await queryRunner.release();
     }
   }
-
-  calculateTotal(rateDto: RateDto[], amountEntered: number): number {
+  // SYSTEM
+  private calculateTotal(rateDto: RateDto[], amountEntered: number): number {
     let total = amountEntered;
 
     rateDto.forEach(transaction => {
@@ -331,11 +198,7 @@ export class TransfersService {
     });
     return total;
   }
-
-  async updateWalletBalance(queryRunner: QueryRunner, walletId: string, newBalance: number) {
-    await queryRunner.manager.update(Wallet, walletId, { balance: newBalance });
-  }
-
+  // USER
   async allTransfers(user: User, paginationDto: PaginationDto) {
     try {
       const month = parseInt(paginationDto.month, 10);
@@ -352,8 +215,8 @@ export class TransfersService {
         // .leftJoinAndSelect('transfers.transactions', 'transactions',{type: 'deposit'})
         .leftJoinAndSelect('transfers.category', 'category')
         .where('fromWallet.user = :userId', { userId: user.id })
-        .andWhere('EXTRACT(MONTH FROM transfers.operationDate) = :month', { month })
-        .andWhere('EXTRACT(YEAR FROM transfers.operationDate) = :year', { year });
+        .andWhere('EXTRACT(MONTH FROM transfers.operationAt) = :month', { month })
+        .andWhere('EXTRACT(YEAR FROM transfers.operationAt) = :year', { year });
 
       if (paginationDto.walletId) {
         queryBuilder.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId: paginationDto.walletId });
@@ -372,7 +235,7 @@ export class TransfersService {
       }
 
       const transfers = await queryBuilder
-        .orderBy('transfers.operationDate', 'DESC')
+        .orderBy('transfers.operationAt', 'DESC')
         .skip(paginationDto.offset || 0)
         .take(paginationDto.limit)
         .getMany();
@@ -389,7 +252,7 @@ export class TransfersService {
       // Puedes realizar acciones de limpieza o manejo de recursos aquí si es necesario
     }
   }
-
+  // USER
   async findOne(id: string) {
     try {
       const transfer = await this.transferRepository.findOne({ where: { id } });
@@ -400,7 +263,7 @@ export class TransfersService {
     }
 
   }
-
+  // USER
   async getRates(user: User, paginationRateDto: PaginationRateDto) {
     const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
     console.log('paginationRateDto:', paginationRateDto);
@@ -467,6 +330,5 @@ export class TransfersService {
       };
     }
   }
-
 
 }

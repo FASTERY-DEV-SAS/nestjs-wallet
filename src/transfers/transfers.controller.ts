@@ -29,48 +29,45 @@ import { PaginationRateDto } from './dto/pagination-rate.dto';
 @ApiBearerAuth()
 @Controller('transfers')
 export class TransfersController {
-  private isProcessing = false;
-  private queue: { createIncomeDto: CreateIncomeDto, user: User }[] = [];
   constructor(
-    private readonly walletsService: WalletsService,
     private readonly transfersService: TransfersService,
   ) { }
 
-  @Post('transfer')
-  @Auth(ValidRoles.user)
-  transferWalletToWallet(@Body() createTransferDto: CreateTransferDto, @GetUser() user: User) {
-    return this.transfersService.transferWalletToWallet(createTransferDto, user);
-  }
-
+  // USER
   @Post('createExpense')
-  @Auth(ValidRoles.user, ValidRoles.admin)
-  async createExpenseController(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
+  @Auth(ValidRoles.user)
+  createExpense(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
     return this.transfersService.createExpense(createExpenseDto, user);
   }
 
+  // @Post('transfer')
+  // @Auth(ValidRoles.user)
+  // transferWalletToWallet(@Body() createTransferDto: CreateTransferDto, @GetUser() user: User) {
+  //   return this.transfersService.transferWalletToWallet(createTransferDto, user);
+  // }
+
+  // USER
   @Post('createIncome')
-  @Auth(ValidRoles.user, ValidRoles.admin)
-  async createIncomeController(@Body() createIncomeDto: CreateIncomeDto, @GetUser() user: User) {
+  @Auth(ValidRoles.user)
+  createIncome(@Body() createIncomeDto: CreateIncomeDto, @GetUser() user: User) {
     return this.transfersService.createIncome(createIncomeDto, user);
   }
-
+  // USER
   @Get('allTransfers')
   @Auth(ValidRoles.user)
   allTransfers(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
     return this.transfersService.allTransfers(user, paginationDto);
   }
-
+  // USER
   @Get('getRates')
   @Auth(ValidRoles.user)
   getRates(@GetUser() user: User, @Query() paginationRateDto: PaginationRateDto) {
     return this.transfersService.getRates(user, paginationRateDto);
   }
-
+  // USER
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.transfersService.findOne(id);
   }
-
- 
 
 }

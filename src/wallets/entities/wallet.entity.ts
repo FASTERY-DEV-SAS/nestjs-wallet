@@ -1,5 +1,4 @@
 import { User } from 'src/auth/entities/user.entity';
-import { Transaction } from 'src/transactions/entities/transaction.entity';
 import { Transfer } from 'src/transfers/entities/transfer.entity';
 import {
   Column,
@@ -22,7 +21,7 @@ export class Wallet {
   @Column({ type: 'text', default: 'USD' })
   currency: string;
 
-  @Column({ type: 'text'})
+  @Column({ type: 'text' })
   description: string;
 
   @Column('bool', { default: true })
@@ -37,20 +36,12 @@ export class Wallet {
   @UpdateDateColumn({})
   updateAt: Date;
 
-  @Column({ type: 'text'})
+  @Column({ type: 'text' })
   type: string;
 
   @ManyToOne(() => User, (user) => user.wallets)
   user: User;
-  
-  // REVISAR
 
-  @OneToMany(() => Transaction, (transaction) => transaction.wallet)
-  transactions: Transaction[];
-
-  @OneToMany(() => Transfer, (transfer) => transfer.fromWallet)
-  sentTransfers: Transfer[];
-
-  @OneToMany(() => Transfer, (transfer) => transfer.toWallet)
-  receivedTransfers: Transfer[];
+  @OneToMany(() => Transfer, (transfers) => transfers.wallet)
+  transfers: Transfer[];
 }

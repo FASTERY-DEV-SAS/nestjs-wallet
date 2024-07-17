@@ -11,33 +11,38 @@ import { ApiTags } from '@nestjs/swagger';
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(private readonly categoriesService: CategoriesService) { }
 
+  // USER++
   @Post('createCategory')
-  @Auth(ValidRoles.user) 
-  createCategory(@Body() createCategoryDto: CreateCategoryDto,@GetUser() user: User) {
-    return this.categoriesService.createCategory(createCategoryDto,user);
+  @Auth(ValidRoles.user)
+  createCategory(@Body() createCategoryDto: CreateCategoryDto, @GetUser() user: User) {
+    return this.categoriesService.createCategory(createCategoryDto, user);
   }
 
-  @Get('getAllCategories')
-  @Auth(ValidRoles.user) 
-  getAllCategories(
+  // USER++
+  @Get('getCategories')
+  @Auth(ValidRoles.user)
+  getCategories(
     @GetUser() user: User, @Query('typeCategory') typeCategory: string) {
-    return this.categoriesService.getAllCategories(user,typeCategory);
+    return this.categoriesService.getCategories(user, typeCategory);
   }
-
-  @Get(':id')
-  getCategoryById(@Param('id') id: string) {
-    return this.categoriesService.getCategoryById(id);
+  // USER++
+  @Get('getCategory/:id')
+  @Auth(ValidRoles.user)
+  getCategory(@GetUser() user: User, @Param('id') id: string) {
+    return this.categoriesService.getCategory(user,id);
   }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.update(id, updateCategoryDto);
+  // USER++
+  @Patch('updateCategory/:id')
+  @Auth(ValidRoles.user)
+  updateCategory(@GetUser() user: User, @Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+    return this.categoriesService.updateCategory(user, id, updateCategoryDto);
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoriesService.remove(+id);
+  // USER++
+  @Delete('deleteCategory/:id')
+  @Auth(ValidRoles.user)
+  deleteCategory(@GetUser() user: User,@Param('id') id: string) {
+    return this.categoriesService.deleteCategory(id, user);
   }
 }
