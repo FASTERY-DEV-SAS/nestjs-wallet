@@ -206,7 +206,6 @@ export class TransfersService {
         throw new Error('Mes o año no válidos');
       }
 
-
       const baseQuery = this.transferRepository
         .createQueryBuilder('transfers')
         .leftJoinAndSelect('transfers.wallet', 'wallet')
@@ -288,43 +287,56 @@ export class TransfersService {
         where: {
           id: id,
         },
+        relations: ['wallet', 'category', 'rates'],
       });
 
       if (!transfer) {
-        throw new BadRequestException('Transferencia no encontrada o no pertenece al usuario');
+        throw new BadRequestException('Transferencia no encontrada');
       }
+
+      // Verificar que la transferencia pertenezca al usuario
+      if (transfer.wallet.user.id !== user.id) {
+        throw new BadRequestException('Transferencia no pertenece al usuario');
+      }
+
       return {
         statusCode: HttpStatus.OK,
         message: 'Transferencia obtenida con éxito',
         transfer,
-      }
+      };
     } catch (error) {
       this.logger.error(`Error in getTransfer`);
       if (error instanceof BadRequestException) {
-        error.message || 'Ocurrió un error al realizar la transferencia';
+        throw new BadRequestException(
+          error.message || 'Ocurrió un error al realizar la transferencia',
+        );
       } else {
         throw new InternalServerErrorException(
           error.message || 'Ocurrió un error al realizar la transferencia',
         );
       }
     }
-
   }
-  // USER
+  // USER+
   async getRates(user: User, paginationRateDto: PaginationRateDto) {
     const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
-    console.log('paginationRateDto:', paginationRateDto);
     try {
       const totalValueQuery = this.rateRepository.createQueryBuilder('rates')
         .leftJoin('rates.transfer', 'transfer')
-        .leftJoin('transfer.fromWallet', 'fromWallet')
-        .leftJoin('transfer.toWallet', 'toWallet')
+        .leftJoin('transfer.wallet', 'wallet')
         .select('SUM(rates.value)', 'total')
-        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month })
-        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year });
+        .where('wallet.userId = :userId', { userId: user.id });
 
-      if (walletId !== 'all') {
-        totalValueQuery.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId });
+      if (month) {
+        totalValueQuery.andWhere('EXTRACT(MONTH FROM transfer.operationAt) = :month', { month });
+      }
+
+      if (year) {
+        totalValueQuery.andWhere('EXTRACT(YEAR FROM transfer.operationAt) = :year', { year });
+      }
+
+      if (walletId && walletId !== 'all') {
+        totalValueQuery.andWhere('wallet.id = :walletId', { walletId });
       }
 
       if (type) {
@@ -337,16 +349,21 @@ export class TransfersService {
 
       const totalValueResult = await totalValueQuery.getRawOne();
 
-      // Consulta para obtener los detalles de las tasas con el ID de la transferencia
       const ratesQuery = this.rateRepository.createQueryBuilder('rates')
         .leftJoinAndSelect('rates.transfer', 'transfer')
-        .leftJoinAndSelect('transfer.fromWallet', 'fromWallet')
-        .leftJoinAndSelect('transfer.toWallet', 'toWallet')
-        .andWhere('EXTRACT(MONTH FROM rates.createAt) = :month', { month })
-        .andWhere('EXTRACT(YEAR FROM rates.createAt) = :year', { year });
+        .leftJoinAndSelect('transfer.wallet', 'wallet')
+        .where('wallet.userId = :userId', { userId: user.id });
 
-      if (walletId !== 'all') {
-        ratesQuery.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId });
+      if (month) {
+        ratesQuery.andWhere('EXTRACT(MONTH FROM transfer.operationAt) = :month', { month });
+      }
+
+      if (year) {
+        ratesQuery.andWhere('EXTRACT(YEAR FROM transfer.operationAt) = :year', { year });
+      }
+
+      if (walletId && walletId !== 'all') {
+        ratesQuery.andWhere('wallet.id = :walletId', { walletId });
       }
 
       if (type) {
@@ -365,9 +382,9 @@ export class TransfersService {
 
       return {
         statusCode: HttpStatus.OK,
-        totalAmount: totalValueResult.total || 0,
+        totalAmount: totalValueResult?.total || 0,
         rates,
-        message: 'Tasas obtenidas con éxito'
+        message: 'Tasas obtenidas con éxito',
       };
     } catch (error) {
       return {
@@ -377,5 +394,6 @@ export class TransfersService {
       };
     }
   }
+
 
 }

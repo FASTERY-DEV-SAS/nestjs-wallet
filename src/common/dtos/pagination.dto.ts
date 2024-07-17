@@ -13,9 +13,11 @@ export class PaginationDto {
   offset?: number;
 
   @IsOptional()
+  @Type(() => Number)
   month: number;
 
   @IsOptional()
+  @Type(() => Number)
   year: number;
 
   @IsString()
