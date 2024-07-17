@@ -58,7 +58,7 @@ export class Transfer {
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
-  createDate: Date;
+  createAt: Date;
 
   // @Column({ type: 'date' })
   // FIXME: QUE SE PUEDA EDITAR ESTA FECHA Y FECHA DE CREACION
@@ -73,5 +73,5 @@ export class Transfer {
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
-  updateDate: Date;
+  updateAt: Date;
 }

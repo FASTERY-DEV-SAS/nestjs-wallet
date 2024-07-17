@@ -10,8 +10,8 @@ export class CreateWalletDto {
   })
   @IsString()
   @MinLength(3)
-  @MaxLength(200)
-  label_wallet: string;
+  @MaxLength(150)
+  name: string;
 
   @ApiProperty({
     example: 'This is a wallet for saving money.',
@@ -20,8 +20,8 @@ export class CreateWalletDto {
   })
   @IsString()
   @MinLength(3)
-  @MaxLength(200)
-  description_wallet: string;
+  @MaxLength(150)
+  description: string;
 
   @ApiProperty({
     example: 'USD',
@@ -31,17 +31,8 @@ export class CreateWalletDto {
   @IsString()
   @IsOptional()
   @MinLength(2)
-  @MaxLength(12)
+  @MaxLength(6)
   currency: string;
-
-  @ApiProperty({
-    example: { "currency": "USD" },
-    description: 'The meta data of the wallet. It can be any object.',
-    nullable: false,
-  })
-  @IsObject()
-  @IsOptional()
-  meta: any | null;
 
   @ApiProperty({
     example: 'saving',

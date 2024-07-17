@@ -15,7 +15,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
-import { ApiBasicAuth, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
@@ -23,44 +23,46 @@ import { ApiBasicAuth, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class WalletsController {
 
   constructor(private readonly walletsService: WalletsService) { }
-  // USER+
+
+  // USER++
   @Post('createWallet')
-  @Auth(ValidRoles.user, ValidRoles.admin)
-  create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
+  @Auth(ValidRoles.user)
+  createWallet(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
     return this.walletsService.createWallet(createWalletDto, user);
   }
-
+  // USER++
   @Patch('updateWallet/:id')
-  @Auth(ValidRoles.user, ValidRoles.admin)
+  @Auth(ValidRoles.user)
   updateWallet(@Param('id') id: string, @Body() updateWalletDto: UpdateWalletDto) {
     return this.walletsService.updateWallet(id, updateWalletDto);
   }
-
+  // USER++
   @Get('getOneWallet/:id')
   @Auth(ValidRoles.user)
-  getWallet(@Param('id') id: string, @GetUser() user: User) {
-    return this.walletsService.getWallet(id, user);
+  getOneWallet(@Param('id') id: string, @GetUser() user: User) {
+    return this.walletsService.getOneWallet(id, user);
   }
-
+  // USER++
   @Get('overallBalance')
-  @Auth(ValidRoles.user, ValidRoles.admin)
-  overallBalance1(@GetUser() user: User) {
-    return this.walletsService.getTotalAmountOfWallets(user);
+  @Auth(ValidRoles.user)
+  getTotalBalanceOfWallets(@GetUser() user: User) {
+    return this.walletsService.getTotalBalanceOfWallets(user);
   }
-  // USER+
+  // USER++
   @Get('getWallets')
   @Auth(ValidRoles.user)
   getWallets(@GetUser() user: User) {
     return this.walletsService.getWallets(user);
   }
-
-  // ADMIN
+  // ADMIN+
   @Get('updateWalletBalance/:id')
+  @Auth(ValidRoles.user)
   updateWalletBalance(@Param('id') id: string) {
     return this.walletsService.updateWalletBalance(id);
   }
-
+  // ADMIN+
   @Get('validateWalletBalance/:id')
+  @Auth(ValidRoles.user)
   validateWalletBalance(@Param('id') id: string) {
     return this.walletsService.validateWalletBalance(id);
   }

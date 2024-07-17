@@ -17,34 +17,33 @@ export class Wallet {
   id: string;
 
   @Column({ type: 'text' })
-  label_wallet: string;
+  name: string;
 
   @Column({ type: 'text', default: 'USD' })
   currency: string;
 
-  @Column({ type: 'text', nullable: true })
-  description_wallet: string;
+  @Column({ type: 'text'})
+  description: string;
 
   @Column('bool', { default: true })
   isActive: boolean;
-
-  @Column({ type: 'jsonb', nullable: true, default: { currency: 'no meta' } })
-  meta: any | null;
 
   @Column({ type: 'int', default: 0 })
   balance: number;
 
   @CreateDateColumn({})
-  createDate: Date;
+  createAt: Date;
 
   @UpdateDateColumn({})
-  updateDate: Date;
+  updateAt: Date;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text'})
   type: string;
 
-  @ManyToOne(() => User, (user) => user.wallet)
+  @ManyToOne(() => User, (user) => user.wallets)
   user: User;
+  
+  // REVISAR
 
   @OneToMany(() => Transaction, (transaction) => transaction.wallet)
   transactions: Transaction[];

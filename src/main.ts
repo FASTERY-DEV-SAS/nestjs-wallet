@@ -3,8 +3,9 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { envs } from './config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
+import { v4 as uuidv4 } from 'uuid';
 async function bootstrap() {
+    const uuid = uuidv4();
     const logger = new Logger('wallet-api-logger');
 
     const app = await NestFactory.create(AppModule);
@@ -25,10 +26,10 @@ async function bootstrap() {
         .setVersion('1.0')
         .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api-docs', app, document);
+    SwaggerModule.setup(uuid, app, document);
 
     await app.listen(envs.port);
-
-    logger.log(`Application is running on PORT: ${envs.port}`);
+    logger.log(`Documentacion corriendo en: ${envs.hostApi}/${uuid}`);
+    logger.log(`Aplicacion corriendo en: ${envs.hostApi}${envs.apiPrefix}`);
 }
 bootstrap();

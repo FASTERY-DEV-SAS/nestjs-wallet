@@ -33,12 +33,12 @@ export class Category {
     meta: any | null;
 
     @CreateDateColumn({})
-    createDate: Date;
+    createAt: Date;
 
     @UpdateDateColumn({})
-    updateDate: Date;
+    updateAt: Date;
 
-    @ManyToOne(() => User, (user) => user.category)
+    @ManyToOne(() => User, (user) => user.categories)
     user: User;
 
     @OneToMany(() => Transfer, (transfer) => transfer.category)
