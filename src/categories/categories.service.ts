@@ -37,7 +37,7 @@ export class CategoriesService {
       console.log(typeCategory);
       const categories = await this.categoryRepository.find({
         where: { user: { id: user.id }, type: typeCategory },
-        order: { createDate: 'DESC' }
+        order: { createAt: 'DESC' }
       });
 
       return categories;

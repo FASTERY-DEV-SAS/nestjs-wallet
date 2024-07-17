@@ -15,7 +15,7 @@ import { User } from 'src/auth/entities/user.entity';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
-import { ApiBasicAuth, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Wallets')
 @ApiBearerAuth()
@@ -23,9 +23,10 @@ import { ApiBasicAuth, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 export class WalletsController {
 
   constructor(private readonly walletsService: WalletsService) { }
-  // USER+
+
+  // USER++
   @Post('createWallet')
-  @Auth(ValidRoles.user, ValidRoles.admin)
+  @Auth(ValidRoles.user)
   create(@Body() createWalletDto: CreateWalletDto, @GetUser() user: User) {
     return this.walletsService.createWallet(createWalletDto, user);
   }

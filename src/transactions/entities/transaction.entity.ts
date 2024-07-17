@@ -27,17 +27,16 @@ export class Transaction {
   meta: any | null;
 
   @CreateDateColumn({})
-  createDate: Date;
+  createAt: Date;
 
   @UpdateDateColumn({})
-  updateDate: Date;
+  updateAt: Date;
 
   @ManyToOne(() => Wallet, (wallet) => wallet.transactions)
   wallet: Wallet;
 
   @Column('text')
   type: string;
-
 
   @ManyToOne(() => Transfer, (transfer) => transfer.transactions)
   transfers: Transfer[];

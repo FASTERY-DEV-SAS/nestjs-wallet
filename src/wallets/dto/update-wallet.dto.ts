@@ -11,7 +11,7 @@ export class UpdateWalletDto {
     @IsString()
     @MinLength(3)
     @IsOptional()
-    label_wallet: string;
+    name: string;
 
     @ApiProperty({
         example: 'USD',
@@ -33,7 +33,7 @@ export class UpdateWalletDto {
     @MinLength(3)
     @MaxLength(50)
     @IsOptional()
-    description_wallet: string;
+    description: string;
 
     @ApiProperty({
         example: { "currency": "USD" },

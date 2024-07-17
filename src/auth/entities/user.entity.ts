@@ -1,6 +1,4 @@
 import { Category } from 'src/categories/entities/category.entity';
-import { Transaction } from 'src/transactions/entities/transaction.entity';
-import { Transfer } from 'src/transfers/entities/transfer.entity';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
 import {
   BeforeInsert,
@@ -22,11 +20,8 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column('text', { default: '', unique: true })
+  @Column('text', { unique: true })
   userName: string;
-
-  @Column('text', { default: '1.1.1.1' })
-  ipRegister: string;
 
   @Column('text', {
     select: false,
@@ -45,11 +40,11 @@ export class User {
   @UpdateDateColumn({})
   updateAt: Date;
 
-  @OneToMany(() => Wallet, (wallet) => wallet.user)
-  wallet: Wallet;
+  @OneToMany(() => Wallet, (wallets) => wallets.user)
+  wallets: Wallet[];
 
-  @OneToMany(() => Category, (category) => category.user)
-  category: Category;
+  @OneToMany(() => Category, (categories) => categories.user)
+  categories: Category[];
 
   @BeforeInsert()
   checkEmailInsert() {
