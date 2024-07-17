@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Transfer } from './entities/transfer.entity';
 import { Rate } from './entities/rate.entity';
 import { WalletsModule } from 'src/wallets/wallets.module';
-import { TransactionsModule } from 'src/transactions/transactions.module';
 import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
@@ -14,7 +13,6 @@ import { AuthModule } from 'src/auth/auth.module';
   imports: [
     AuthModule,
     WalletsModule,
-    TransactionsModule,
     TypeOrmModule.forFeature([Transfer, Rate]),
   ],
   exports: [TransfersService, TypeOrmModule],

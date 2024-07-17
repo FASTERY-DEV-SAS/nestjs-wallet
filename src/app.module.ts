@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
-import { TransactionsModule } from './transactions/transactions.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { CategoriesModule } from './categories/categories.module';
@@ -29,7 +28,6 @@ import { envs } from './config';
     }),
     CommonModule,
     AuthModule,
-    TransactionsModule,
     WalletsModule,
     TransfersModule,
     CategoriesModule,
