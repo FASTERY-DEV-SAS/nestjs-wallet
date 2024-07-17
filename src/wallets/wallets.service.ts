@@ -8,16 +8,16 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 
 @Injectable()
 export class WalletsService {
-  private readonly logger = new Logger(WalletsService.name);
+  private readonly logger = new Logger('WalletsService');
 
   constructor(
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
   ) { }
 
-  // USER
+  // USER++
   async createWallet(createWalletDto: CreateWalletDto, user: User): Promise<{
-    statusCode: number;
+    statusCode: HttpStatus;
     message: string;
     walletId: string;
   }> {
@@ -39,20 +39,19 @@ export class WalletsService {
         walletId: newwallet.id,
       };
     } catch (error) {
+      this.logger.error(`Error in createWallet`);
       if (error instanceof BadRequestException) {
-        this.logger.error(error.message);
-        throw error;
+        error.message || 'Ocurrió un error al crear la billetera';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al crear la billetera',
+          error.message || 'Ocurrió un error al crear la billetera',
         );
       }
     }
   }
-
-  // USER+
+  // USER++
   async updateWallet(id: string, updateWalletDto: UpdateWalletDto): Promise<{
-    statusCode: number;
+    statusCode: HttpStatus;
     message: string;
     walletId: string;
   }> {
@@ -65,17 +64,22 @@ export class WalletsService {
         walletId: id
       };
     } catch (error) {
+      this.logger.error(`Error in updateWallet`);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al actualizar la billetera';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al crear la billetera',
+          error.message || 'Ocurrió un error al actualizar la billetera',
         );
       }
     }
   }
-
-  async getWallet(walletId: string, user: User) {
+  // USER++
+  async getOneWallet(walletId: string, user: User): Promise<{
+    wallet: Wallet;
+    statusCode: HttpStatus;
+    message: string;
+  }> {
     try {
       const wallet = await this.walletRepository.findOne({ where: { id: walletId, user: { id: user.id }, isActive: true } });
       return {
@@ -84,46 +88,53 @@ export class WalletsService {
         message: 'Billetera del usuario',
       }
     } catch (error) {
+      this.logger.error(`Error in getOneWallet`);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al obtener la billetera del usuario';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al obtener la billetera',
+          error.message || 'Ocurrió un error al obtener la billetera del usuario',
         );
       }
     }
 
   }
-
-  async getTotalAmountOfWallets(user: User) {
+  // USER++
+  async getTotalBalanceOfWallets(user: User): Promise<{
+    statusCode: HttpStatus;
+    total: number;
+    message: string;
+  }> {
     let overallBalance = 0;
     try {
       const wallets = await this.walletRepository.find({
         where: { user: { id: user.id }, isActive: true },
       });
-
       wallets.forEach((wallet) => {
         overallBalance += wallet.balance;
       });
-
       return {
         statusCode: HttpStatus.OK,
         total: overallBalance,
         message: 'Balance general de las billeteras',
-
       };
     } catch (error) {
+      this.logger.error(`Error in getTotalBalanceOfWallets`);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al obtener el balance general de las billeteras';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al obtener el balance general de las billeteras',
+          error.message || 'Ocurrió un error al obtener el balance general de las billeteras',
         );
       }
     }
   }
-  // USER+
-  async getWallets(user: User) {
+  // USER++
+  async getWallets(user: User): Promise<{
+    statusCode: HttpStatus;
+    message: string;
+    wallets: Wallet[];
+  }> {
     try {
       const wallets = await this.walletRepository.find({
         where: { user: { id: user.id } },
@@ -137,15 +148,105 @@ export class WalletsService {
         message: 'Billeteras del usuario',
       }
     } catch (error) {
+      this.logger.error(`Error in getWallets`);
       if (error instanceof BadRequestException) {
-        throw error;
+        error.message || 'Ocurrió un error al obtener las billeteras del usuario';
       } else {
         throw new InternalServerErrorException(
-          'Ocurrió un error al obtener las billeteras del usuario',
+          error.message || 'Ocurrió un error al obtener las billeteras del usuario',
         );
       }
     }
 
+  }
+  // ADMIN+
+  async updateWalletBalance(walletId: string): Promise<{
+    statusCode: HttpStatus;
+    message: string;
+    walletId: string;
+  }> {
+    try {
+      const wallet = await this.walletRepository.findOne({
+        where: { id: walletId },
+        relations: ['transactions'],
+      });
+      // FIXME: REVISAR CODIGO
+      const result = await this.walletRepository
+        .createQueryBuilder('wallet')
+        .leftJoin('wallet.transactions', 'transaction')
+        .select('SUM(CASE WHEN transaction.type IN (:...types) THEN transaction.amount ELSE transaction.amount END)', 'balance')
+        .where('wallet.id = :walletId', { walletId })
+        .andWhere('transaction.confirmed = true')
+        .setParameters({ types: ['deposit', 'revenue', 'fee', 'withdraw'] })
+        .getRawOne();
+
+      wallet.balance = result.balance !== null ? result.balance : 0;
+
+      await this.walletRepository.save(wallet);
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Balance actualizado con éxito',
+        walletId,
+      };
+    } catch (error) {
+      this.logger.error(`Error in updateWalletBalance`);
+      if (error instanceof BadRequestException) {
+        error.message || 'Error updating wallet balance';
+      } else {
+        throw new InternalServerErrorException(
+          error.message || 'Error updating wallet balance',
+        );
+      }
+    }
+  }
+  // ADMIN+
+  async validateWalletBalance(walletId: string) {
+    try {
+      const wallet = await this.walletRepository.findOne({
+        where: { id: walletId },
+        relations: ['transactions'],
+      });
+
+      const relevantTransactions = wallet.transactions.filter(
+        (transaction) => transaction.confirmed
+      );
+      // FIXME: REVISAR CODIGO
+      const balanceTransaction = relevantTransactions.reduce(
+        (total, transaction) => {
+          if (transaction.type === 'deposit' || transaction.type === 'revenue') {
+            return total + Math.round(transaction.amount * 100) / 100;
+          } else if (transaction.type === 'fee' || transaction.type === 'withdraw') {
+            return total + Math.round(transaction.amount * 100) / 100;
+          }
+          return total;
+        },
+        0
+      );
+
+      const balanceWallet = Number(wallet.balance);
+      const roundedBalanceTransaction = Math.round(balanceTransaction * 100) / 100;
+      const roundedBalanceWallet = Math.round(balanceWallet * 100) / 100;
+
+      const balanceMatches = roundedBalanceWallet === roundedBalanceTransaction;
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: balanceMatches ? 'Balance matches' : 'Balance does not match',
+        status: balanceMatches,
+        balance: roundedBalanceWallet,
+        transactions: roundedBalanceTransaction,
+      };
+    } catch (error) {
+      this.logger.error(`Error in validateWalletBalance`);
+      if (error instanceof BadRequestException) {
+        error.message || 'Error validating wallet balance';
+      } else {
+        throw new InternalServerErrorException(
+          error.message || 'Error validating wallet balance',
+        );
+      }
+    }
   }
 
   // SYSTEM
@@ -191,83 +292,6 @@ export class WalletsService {
       }
     }
   }
-
-  // SUPPORT IT
-  async updateWalletBalance(walletId: string): Promise<Wallet> {
-    try {
-      const wallet = await this.walletRepository.findOneOrFail({
-        where: { id: walletId },
-        relations: ['transactions'],
-      });
-
-      const result = await this.walletRepository
-        .createQueryBuilder('wallet')
-        .leftJoin('wallet.transactions', 'transaction')
-        .select('SUM(CASE WHEN transaction.type IN (:...types) THEN transaction.amount ELSE transaction.amount END)', 'balance')
-        .where('wallet.id = :walletId', { walletId })
-        .andWhere('transaction.confirmed = true')
-        .setParameters({ types: ['deposit', 'revenue', 'fee', 'withdraw'] })
-        .getRawOne();
-
-      wallet.balance = result.balance !== null ? result.balance : 0;
-
-      await this.walletRepository.save(wallet);
-
-      return wallet;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException('Wallet not found');
-      }
-      throw new Error('Error updating wallet balance');
-    }
-  }
-
-  // TODO: CREAR IM JOBS PARA CREAR INFORMES DE BALANCE
-  async validateWalletBalance(walletId: string) {
-    try {
-      const wallet = await this.walletRepository.findOneOrFail({
-        where: { id: walletId },
-        relations: ['transactions'],
-      });
-
-      const relevantTransactions = wallet.transactions.filter(
-        (transaction) => transaction.confirmed
-      );
-
-      const balanceTransaction = relevantTransactions.reduce(
-        (total, transaction) => {
-          if (transaction.type === 'deposit' || transaction.type === 'revenue') {
-            return total + Math.round(transaction.amount * 100) / 100;
-          } else if (transaction.type === 'fee' || transaction.type === 'withdraw') {
-            return total + Math.round(transaction.amount * 100) / 100;
-          }
-          return total;
-        },
-        0
-      );
-
-      const balanceWallet = Number(wallet.balance);
-      const roundedBalanceTransaction = Math.round(balanceTransaction * 100) / 100;
-      const roundedBalanceWallet = Math.round(balanceWallet * 100) / 100;
-
-      const balanceMatches = roundedBalanceWallet === roundedBalanceTransaction;
-
-      return {
-        message: balanceMatches ? 'Balance matches' : 'Balance does not match',
-        status: balanceMatches,
-        balance: roundedBalanceWallet,
-        transactions: roundedBalanceTransaction,
-      };
-    } catch (error) {
-      return {
-        message: 'Wallet not found',
-        status: false,
-      };
-    }
-  }
-
-
-
   async getWalletAndTransactions(walletId: string): Promise<Wallet> {
     try {
       const wallet = await this.walletRepository.findOneOrFail({
@@ -279,10 +303,6 @@ export class WalletsService {
       throw new NotFoundException('Wallet not found');
     }
   }
-
-
-
-
   async containsBalance(wallet: Wallet, amount: number): Promise<boolean> {
     await this.updateWalletBalance(wallet.id);
     if (wallet.balance < amount) {
@@ -290,6 +310,4 @@ export class WalletsService {
     }
     return true;
   }
-
-
 }

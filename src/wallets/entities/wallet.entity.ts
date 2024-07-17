@@ -42,7 +42,7 @@ export class Wallet {
 
   @ManyToOne(() => User, (user) => user.wallets)
   user: User;
-
+  
   // REVISAR
 
   @OneToMany(() => Transaction, (transaction) => transaction.wallet)

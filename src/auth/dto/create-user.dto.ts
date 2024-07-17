@@ -29,15 +29,6 @@ export class CreateUserDto {
   userName: string;
 
   @ApiProperty({
-    example: '192.168.0.101',
-    description: 'The ip address of the User',
-    nullable: false,
-  })
-  @IsString({ message: 'La dirección IP debe ser un texto' })
-  @IsIP(null, { message: 'La dirección IP debe ser válida' })
-  ipRegister: string;
-
-  @ApiProperty({
     example: 'Abc123',
     description: 'The password of the User',
     format: 'text',
