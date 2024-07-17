@@ -33,7 +33,7 @@ export class TransfersController {
     private readonly transfersService: TransfersService,
   ) { }
 
-  // USER
+  // USER+
   @Post('createExpense')
   @Auth(ValidRoles.user)
   createExpense(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
@@ -46,28 +46,29 @@ export class TransfersController {
   //   return this.transfersService.transferWalletToWallet(createTransferDto, user);
   // }
 
-  // USER
+  // USER+
   @Post('createIncome')
   @Auth(ValidRoles.user)
   createIncome(@Body() createIncomeDto: CreateIncomeDto, @GetUser() user: User) {
     return this.transfersService.createIncome(createIncomeDto, user);
   }
-  // USER
-  @Get('allTransfers')
+  // USER+
+  @Get('getTransfer/:id')
   @Auth(ValidRoles.user)
-  allTransfers(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
-    return this.transfersService.allTransfers(user, paginationDto);
+  getTransfer(@GetUser() user: User, @Param('id') id: string) {
+    return this.transfersService.getTransfer(id,user);
+  }
+  // USER+
+  @Get('getTransfers')
+  @Auth(ValidRoles.user)
+  getTransfers(@GetUser() user: User, @Query() paginationDto: PaginationDto) {
+    return this.transfersService.getTransfers(user, paginationDto);
   }
   // USER
   @Get('getRates')
   @Auth(ValidRoles.user)
   getRates(@GetUser() user: User, @Query() paginationRateDto: PaginationRateDto) {
     return this.transfersService.getRates(user, paginationRateDto);
-  }
-  // USER
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.transfersService.findOne(id);
   }
 
 }

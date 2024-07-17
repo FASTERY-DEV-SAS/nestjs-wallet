@@ -35,13 +35,13 @@ export class WalletsController {
     return this.walletsService.updateWallet(id, updateWalletDto);
   }
   // USER++
-  @Get('getOneWallet/:id')
+  @Get('getWallet/:id')
   @Auth(ValidRoles.user)
-  getOneWallet(@Param('id') id: string, @GetUser() user: User) {
-    return this.walletsService.getOneWallet(id, user);
+  getWallet(@Param('id') id: string, @GetUser() user: User) {
+    return this.walletsService.getWallet(id, user);
   }
   // USER++
-  @Get('overallBalance')
+  @Get('getTotalBalanceOfWallets')
   @Auth(ValidRoles.user)
   getTotalBalanceOfWallets(@GetUser() user: User) {
     return this.walletsService.getTotalBalanceOfWallets(user);

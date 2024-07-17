@@ -1,15 +1,11 @@
 import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
-import { CreateTransferDto } from './dto/create-transfer.dto';
-import { UpdateTransferDto } from './dto/update-transfer.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, MoreThanOrEqual, QueryRunner, Repository } from 'typeorm';
+import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
 import { Transfer } from './entities/transfer.entity';
-import { WalletsService } from 'src/wallets/wallets.service';
 import { User } from 'src/auth/entities/user.entity';
 import { CreateIncomeDto } from './dto/create-income.dto';
 import { CreateExpenseDto } from './dto/create-exprense.dto';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
-import { retry } from 'rxjs';
 import { Wallet } from 'src/wallets/entities/wallet.entity';
 import { RateDto } from './dto/rate.dto';
 import { Rate } from './entities/rate.entity';
@@ -20,9 +16,6 @@ export class TransfersService {
   private readonly logger = new Logger('TransfersService');
   constructor(
 
-    @Inject(WalletsService)
-    private readonly walletsService: WalletsService,
-
     @InjectRepository(Rate)
     private readonly rateRepository: Repository<Rate>,
 
@@ -31,7 +24,7 @@ export class TransfersService {
 
     private readonly dataSource: DataSource,
   ) { }
-  // USER
+  // USER++
   async createIncome(createIncomeDto: CreateIncomeDto, user: User) {
     let amountEntered = createIncomeDto.amount;
     let walletBalanceBefore = 0;
@@ -45,12 +38,12 @@ export class TransfersService {
 
     try {
       const wallet = await queryRunner.manager.findOne(Wallet, {
-        where: { id: createIncomeDto.walletIdSelected, user: { id: user.id }, isActive: true },
-        lock: { mode: 'pessimistic_write' },
+        where: { id: createIncomeDto.walletId, user: { id: user.id }, isActive: true },
+        // lock: { mode: 'pessimistic_read' },
       });
 
       if (!wallet) {
-        throw new NotFoundException('Wallet not found');
+        throw new NotFoundException('Billetera no encontrada o no cumple con los requisitos');
       }
 
       walletBalanceBefore = wallet.balance;
@@ -65,7 +58,7 @@ export class TransfersService {
       walletBalanceAfter = walletBalanceBefore + total;
       console.log('walletBalanceAfter:', walletBalanceAfter);
 
-      await queryRunner.manager.update(Wallet, createIncomeDto.walletIdSelected, { balance: walletBalanceAfter });
+      await queryRunner.manager.update(Wallet, createIncomeDto.walletId, { balance: walletBalanceAfter });
 
       let newRate = null;
       if (createIncomeDto.rates) {
@@ -75,14 +68,14 @@ export class TransfersService {
 
       const transfer = queryRunner.manager.create(Transfer, {
         type: 'income',
-        wallet: { id: createIncomeDto.walletIdSelected },
+        wallet: { id: createIncomeDto.walletId },
         toWallet: null,
         rates: newRate,
         amountEntered,
         walletBalanceBefore,
         total,
         walletBalanceAfter,
-        category: { id: createIncomeDto.categoryIdSelected },
+        category: { id: createIncomeDto.categoryId },
       });
 
       await queryRunner.manager.save(Transfer, transfer);
@@ -90,7 +83,7 @@ export class TransfersService {
       await queryRunner.commitTransaction();
       return { message: 'Transferencia realizada con éxito', statusCode: HttpStatus.CREATED, transferId: transfer.id };
     } catch (error) {
-      console.error('Error in createIncome:', error);
+      console.error('Error in createIncome:', error.stack);
       await queryRunner.rollbackTransaction();
 
       if (error instanceof BadRequestException) {
@@ -107,7 +100,7 @@ export class TransfersService {
 
   // transferWalletToWallet
 
-  // USER
+  // USER++
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
     let amountEntered = createExpenseDto.amount;
     let walletBalanceBefore = 0;
@@ -130,9 +123,14 @@ export class TransfersService {
         where: { id: createExpenseDto.walletId, user: { id: user.id }, isActive: true, balance: MoreThanOrEqual(total) },
         lock: { mode: 'pessimistic_read' },
       });
-      if (!wallet.id) {
-        throw new NotFoundException('Wallet not found');
+      if (!wallet) {
+        throw new NotFoundException('Billtera no encontrada o no tiene los recursos suficientes');
       }
+
+      if (total > wallet.balance) {
+        throw new BadRequestException('El monto de la transferencia supera el saldo de la billetera');
+      }
+
       walletBalanceBefore = wallet.balance;
       console.log('walletBalanceBefore:', walletBalanceBefore);
 
@@ -198,68 +196,117 @@ export class TransfersService {
     });
     return total;
   }
-  // USER
-  async allTransfers(user: User, paginationDto: PaginationDto) {
+  // USER+
+  async getTransfers(user: User, paginationDto: PaginationDto) {
     try {
-      const month = parseInt(paginationDto.month, 10);
-      const year = parseInt(paginationDto.year, 10);
+      const month = paginationDto.month;
+      const year = paginationDto.year;
 
       if (isNaN(month) || isNaN(year)) {
         throw new Error('Mes o año no válidos');
       }
 
-      const queryBuilder = this.transferRepository
+
+      const baseQuery = this.transferRepository
         .createQueryBuilder('transfers')
-        .leftJoinAndSelect('transfers.fromWallet', 'fromWallet')
-        .leftJoinAndSelect('transfers.toWallet', 'toWallet')
-        // .leftJoinAndSelect('transfers.transactions', 'transactions',{type: 'deposit'})
+        .leftJoinAndSelect('transfers.wallet', 'wallet')
         .leftJoinAndSelect('transfers.category', 'category')
-        .where('fromWallet.user = :userId', { userId: user.id })
+        .leftJoinAndSelect('transfers.rates', 'rates')
+        .where('wallet.user = :userId', { userId: user.id })
         .andWhere('EXTRACT(MONTH FROM transfers.operationAt) = :month', { month })
         .andWhere('EXTRACT(YEAR FROM transfers.operationAt) = :year', { year });
 
       if (paginationDto.walletId) {
-        queryBuilder.andWhere('(fromWallet.id = :walletId OR toWallet.id = :walletId)', { walletId: paginationDto.walletId });
+        baseQuery.andWhere('wallet.id = :walletId', { walletId: paginationDto.walletId });
       }
 
       if (paginationDto.categoryId) {
-        queryBuilder.andWhere('category.id = :categoryId', { categoryId: paginationDto.categoryId });
+        baseQuery.andWhere('category.id = :categoryId', { categoryId: paginationDto.categoryId });
       }
 
       if (paginationDto.type) {
-        queryBuilder.andWhere('transfers.type = :type', { type: paginationDto.type });
+        baseQuery.andWhere('transfers.type = :type', { type: paginationDto.type });
       }
 
       if (paginationDto.search) {
-        queryBuilder.andWhere('(transfers.meta::text ILIKE :search OR transfers.status ILIKE :search)', { search: `%${paginationDto.search}%` });
+        baseQuery.andWhere('(transfers.meta::text ILIKE :search OR transfers.status ILIKE :search)', { search: `%${paginationDto.search}%` });
       }
 
-      const transfers = await queryBuilder
+      // Consulta para obtener las transferencias con paginación
+      const transfers = await baseQuery
         .orderBy('transfers.operationAt', 'DESC')
         .skip(paginationDto.offset || 0)
         .take(paginationDto.limit)
         .getMany();
 
-      if (transfers.length === 0) {
-        return [];
+      // Consulta para obtener la suma total ajustada para tipos 'income' y 'expense'
+      const totalSumQuery = this.transferRepository
+        .createQueryBuilder('transfers')
+        .select(
+          "SUM(CASE WHEN transfers.type = 'income' THEN transfers.total WHEN transfers.type = 'expense' THEN -transfers.total ELSE 0 END)",
+          'sum'
+        )
+        .leftJoin('transfers.wallet', 'wallet')
+        .where('wallet.user = :userId', { userId: user.id })
+        .andWhere('EXTRACT(MONTH FROM transfers.operationAt) = :month', { month })
+        .andWhere('EXTRACT(YEAR FROM transfers.operationAt) = :year', { year });
+
+      if (paginationDto.walletId) {
+        totalSumQuery.andWhere('wallet.id = :walletId', { walletId: paginationDto.walletId });
       }
 
-      return transfers;
+      if (paginationDto.categoryId) {
+        totalSumQuery.andWhere('category.id = :categoryId', { categoryId: paginationDto.categoryId });
+      }
+
+      if (paginationDto.type) {
+        totalSumQuery.andWhere('transfers.type = :type', { type: paginationDto.type });
+      }
+
+      if (paginationDto.search) {
+        totalSumQuery.andWhere('(transfers.meta::text ILIKE :search OR transfers.status ILIKE :search)', { search: `%${paginationDto.search}%` });
+      }
+
+      const totalSumResult = await totalSumQuery.getRawOne();
+      const totalSum = totalSumResult ? Number(totalSumResult.sum) : 0;
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Transferencias obtenidas con éxito',
+        transfers,
+        totalSum
+      };
     } catch (error) {
       console.error('Error al obtener transferencias:', error.message);
       throw new Error('Error al obtener transferencias');
-    } finally {
-      // Puedes realizar acciones de limpieza o manejo de recursos aquí si es necesario
     }
   }
-  // USER
-  async findOne(id: string) {
+  // USER++
+  async getTransfer(id: string, user: User) {
     try {
-      const transfer = await this.transferRepository.findOne({ where: { id } });
-      return transfer;
+      const transfer = await this.transferRepository.findOne({
+        where: {
+          id: id,
+        },
+      });
+
+      if (!transfer) {
+        throw new BadRequestException('Transferencia no encontrada o no pertenece al usuario');
+      }
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'Transferencia obtenida con éxito',
+        transfer,
+      }
     } catch (error) {
-      console.error('Error al obtener transferencia:', error);
-      return {};
+      this.logger.error(`Error in getTransfer`);
+      if (error instanceof BadRequestException) {
+        error.message || 'Ocurrió un error al realizar la transferencia';
+      } else {
+        throw new InternalServerErrorException(
+          error.message || 'Ocurrió un error al realizar la transferencia',
+        );
+      }
     }
 
   }

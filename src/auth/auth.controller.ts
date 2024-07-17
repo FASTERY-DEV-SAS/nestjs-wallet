@@ -19,17 +19,17 @@ export class AuthController {
     private readonly authService: AuthService,
   ) { }
 
-
+  // USER+
   @Post('register')
-  createUser(@Body() createUserDto: CreateUserDto) {
-    return this.authService.create(createUserDto);
+  register(@Body() createUserDto: CreateUserDto) {
+    return this.authService.register(createUserDto);
   }
-
+  // USER+
   @Post('login')
-  loginUser(@Body() loginUserDto: LoginUserDto) {
+  login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
   }
-
+  // USER+
   @Get('check-auth-status')
   @Auth()
   checkAuthStatus(@GetUser() user: User) {
