@@ -108,7 +108,9 @@ export class WalletsService {
     let overallBalance = 0;
     try {
       const wallets = await this.walletRepository.find({
-        where: { user: { id: user.id }, isActive: true },
+        where: { user: { id: user.id }},
+        // where: { user: { id: user.id }, isActive: true },
+        // TODO: ANALIZAR SI SE DEBE AGREGAR EL CAMPO DE ACTIVO
       });
       wallets.forEach((wallet) => {
         overallBalance += wallet.balance;
