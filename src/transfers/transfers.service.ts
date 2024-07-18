@@ -287,14 +287,12 @@ export class TransfersService {
         where: {
           id: id,
         },
-        relations: ['wallet', 'category', 'rates'],
+        relations: ['wallet', 'category', 'rates', 'wallet.user'],
       });
-
       if (!transfer) {
         throw new BadRequestException('Transferencia no encontrada');
       }
 
-      // Verificar que la transferencia pertenezca al usuario
       if (transfer.wallet.user.id !== user.id) {
         throw new BadRequestException('Transferencia no pertenece al usuario');
       }
@@ -305,7 +303,7 @@ export class TransfersService {
         transfer,
       };
     } catch (error) {
-      this.logger.error(`Error in getTransfer`);
+      this.logger.error(`Error in getTransfer`, error.stack);
       if (error instanceof BadRequestException) {
         throw new BadRequestException(
           error.message || 'Ocurrió un error al realizar la transferencia',
