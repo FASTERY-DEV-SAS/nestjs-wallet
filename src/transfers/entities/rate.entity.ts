@@ -13,7 +13,7 @@ import {
 import { Transfer } from './transfer.entity';
 
 @Entity({ name: 'rates' })
-export class Rate {
+export class Rate  {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
