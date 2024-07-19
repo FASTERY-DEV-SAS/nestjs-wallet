@@ -31,7 +31,7 @@ export class AnalyticsService {
       }
     }
 
-    // Convierte el objeto en un array y ordena por día
+    // Convierte el objeto en un array, divide expense e income por 100, y ordena por día
     const chartData = Object.keys(dailyData).map(day => ({
       day: new Date(day).getDate().toString(), // Extrae solo el día del mes
       ...dailyData[day],
