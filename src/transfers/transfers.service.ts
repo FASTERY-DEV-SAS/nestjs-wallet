@@ -317,7 +317,7 @@ export class TransfersService {
   }
   // USER+
   async getRates(user: User, paginationRateDto: PaginationRateDto) {
-    const { limit, offset, month, year, walletId, type, subType } = paginationRateDto;
+    const { limit, offset, month, year, walletId, type, subType, search } = paginationRateDto;
     try {
       const totalValueQuery = this.rateRepository.createQueryBuilder('rates')
         .leftJoin('rates.transfer', 'transfer')
@@ -343,6 +343,10 @@ export class TransfersService {
 
       if (subType) {
         totalValueQuery.andWhere('rates.subType = :subType', { subType });
+      }
+
+      if (search) {
+        totalValueQuery.andWhere('CAST(rates.meta AS TEXT) LIKE :search', { search: `%${search}%` });
       }
 
       const totalValueResult = await totalValueQuery.getRawOne();
@@ -372,24 +376,33 @@ export class TransfersService {
         ratesQuery.andWhere('rates.subType = :subType', { subType });
       }
 
+      if (search) {
+        ratesQuery.andWhere('CAST(rates.meta AS TEXT) LIKE :search', { search: `%${search}%` });
+      }
+
       ratesQuery.orderBy('rates.createAt', 'DESC')
         .skip(offset || 0)
-        .take(limit || 10);
+        .take(limit || 250);
 
       const rates = await ratesQuery.getMany();
 
       return {
         statusCode: HttpStatus.OK,
+        message: 'Tasas obtenidas con éxito',
         totalAmount: totalValueResult?.total || 0,
         rates,
-        message: 'Tasas obtenidas con éxito',
       };
     } catch (error) {
-      return {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Error al obtener tasas',
-        error: error.message,
-      };
+      this.logger.error(`Error in getRates`, error.stack);
+      if (error instanceof BadRequestException) {
+        throw new BadRequestException(
+          error.message || 'Ocurrió un error al obtener las tasas',
+        );
+      } else {
+        throw new InternalServerErrorException(
+          error.message || 'Ocurrió un error al obtener las tasas',
+        );
+      }
     }
   }
 
