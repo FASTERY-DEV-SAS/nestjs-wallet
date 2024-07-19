@@ -8,18 +8,25 @@ export class CreateExpenseDto {
 
   @ApiProperty({
     example: [
-      // {
-      //   type: 'tax',
-      //   incomeExpenseType: 'income',
-      //   typeAmount: 'percentage',
-      //   amount: 10,
-      // },
+      {
+        type: 'tax',
+        incomeExpenseType: 'income',
+        subType: 'revenue_admin',
+        typeRate: 'fixed',
+        value: 10,
+        meta: {
+          funcionalidad: "recargabemovil"
+        }
+      },
       {
         type: 'commission',
         incomeExpenseType: 'expense',
         subType: 'revenue_pdv',
         typeRate: 'fixed',
         value: 10,
+        meta: {
+          funcionalidad: "recargabemovil"
+        }
       },
     ],
     description: 'Rates of the transaction',

@@ -105,6 +105,7 @@ export class CategoriesService {
   async updateCategory(user: User, id: string, updateCategoryDto: UpdateCategoryDto): Promise<{
     statusCode: HttpStatus;
     message: string;
+    categoryId: string;
   }> {
     try {
       const category = await this.categoryRepository.findOne({ where: { id, user: { id: user.id } } });
@@ -115,6 +116,7 @@ export class CategoriesService {
       return {
         statusCode: HttpStatus.OK,
         message: 'Actualizado correctamente',
+        categoryId: category.id,
       }
     } catch (error) {
       this.logger.error(`Error in updateCategory`);

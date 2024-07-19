@@ -29,7 +29,7 @@ export class Rate {
   @Column('text')
   typeRate: string;
 
-  @Column({ type: 'int'})
+  @Column({ type: 'int' })
   value: number;
 
   @ManyToOne(() => Transfer, (transfer) => transfer.rates)
@@ -40,4 +40,7 @@ export class Rate {
 
   @UpdateDateColumn()
   updateAt: Date;
+
+  @Column('json', { nullable: true })
+  meta: Record<string, any>;
 }
