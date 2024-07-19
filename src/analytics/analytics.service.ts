@@ -37,10 +37,20 @@ export class AnalyticsService {
       ...dailyData[day],
     })).sort((a, b) => a.day.localeCompare(b.day));
 
+    // Calcula el promedio de gastos e ingresos en porcentaje
+    const totalDays = chartData.length;
+    const totalExpense = chartData.reduce((sum, day) => sum + day.expense, 0);
+    const totalIncome = chartData.reduce((sum, day) => sum + day.income, 0);
+
+    const averageExpensePercentage = (totalExpense / totalDays) / 10000;
+    const averageIncomePercentage = (totalIncome / totalDays) / 10000;
+
     return {
       statusCode: HttpStatus.OK,
       message: 'Chart transfers',
-      data: chartData
+      data: chartData,
+      averageExpensePercentage: averageExpensePercentage.toFixed(2),
+      averageIncomePercentage: averageIncomePercentage.toFixed(2),
     }
   }
 
