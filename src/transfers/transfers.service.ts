@@ -26,7 +26,7 @@ export class TransfersService {
   ) { }
   // USER++
   async createIncome(createIncomeDto: CreateIncomeDto, user: User) {
-    let amountEntered = createIncomeDto.amount;
+    let amountEntered = createIncomeDto.amount || 0;
     let walletBalanceBefore = 0;
     let total = 0;
     let walletBalanceAfter = 0;
@@ -102,7 +102,7 @@ export class TransfersService {
 
   // USER++
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
-    let amountEntered = createExpenseDto.amount;
+    let amountEntered = createExpenseDto.amount || 0;
     let walletBalanceBefore = 0;
     let total = 0;
     let walletBalanceAfter = 0;
