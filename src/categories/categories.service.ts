@@ -81,8 +81,9 @@ export class CategoriesService {
         .leftJoin('category.transfers', 'transfer')
         .select('category.id', 'id')
         .addSelect('category.name', 'name')
+        .addSelect('category.type', 'type')
         .addSelect('SUM(transfer.total)', 'totalAmount')
-        .addSelect('COUNT(transfer.id)', 'LethTransfers')
+        .addSelect('COUNT(transfer.id)', 'transferNumber')
         .where('category.userId = :userId', { userId: user.id })
         .groupBy('category.id');
 
@@ -101,9 +102,10 @@ export class CategoriesService {
         message: 'Categorias obtenidas correctamente',
         categories: categories.map(category => ({
           id: category.id,
+          type: category.type,
           name: category.name,
           totalAmount: category.totalAmount || 0,
-          LethTransfers: category.LethTransfers || 0,
+          transferNumber: category.transferNumber || 0,
         })),
       };
     } catch (error) {
