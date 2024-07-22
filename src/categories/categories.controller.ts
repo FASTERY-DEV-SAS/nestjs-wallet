@@ -7,6 +7,7 @@ import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
 import { ApiTags } from '@nestjs/swagger';
+import { PaginationCategoryDto } from './dto/pagination-category.dto';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -27,11 +28,19 @@ export class CategoriesController {
     @GetUser() user: User, @Query('typeCategory') typeCategory: string) {
     return this.categoriesService.getCategories(user, typeCategory);
   }
+  // USER
+  @Get('getCategoryBalance')
+  @Auth(ValidRoles.user)
+  getCategoryBalance(
+    @GetUser() user: User, @Query() paginationCategoryDto: PaginationCategoryDto) {
+    return this.categoriesService.getCategoryBalance(user, paginationCategoryDto);
+  }
+
   // USER++
   @Get('getCategory/:id')
   @Auth(ValidRoles.user)
   getCategory(@GetUser() user: User, @Param('id') id: string) {
-    return this.categoriesService.getCategory(user,id);
+    return this.categoriesService.getCategory(user, id);
   }
   // USER++
   @Patch('updateCategory/:id')
@@ -42,7 +51,7 @@ export class CategoriesController {
   // USER++
   @Delete('deleteCategory/:id')
   @Auth(ValidRoles.user)
-  deleteCategory(@GetUser() user: User,@Param('id') id: string) {
+  deleteCategory(@GetUser() user: User, @Param('id') id: string) {
     return this.categoriesService.deleteCategory(id, user);
   }
 }
