@@ -274,7 +274,7 @@ export class TransfersService {
         statusCode: HttpStatus.OK,
         message: 'Transferencias obtenidas con éxito',
         transfers,
-        totalSum
+        balance: totalSum,
       };
     } catch (error) {
       console.error('Error al obtener transferencias:', error.message);
