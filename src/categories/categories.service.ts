@@ -82,7 +82,7 @@ export class CategoriesService {
         .select('category.id', 'id')
         .addSelect('category.name', 'name')
         .addSelect('category.type', 'type')
-        .addSelect('SUM(transfer.total)', 'totalAmount')
+        .addSelect('SUM(transfer.total)', 'balance')
         .addSelect('COUNT(transfer.id)', 'transferNumber')
         .where('category.userId = :userId', { userId: user.id })
         .groupBy('category.id');
@@ -109,7 +109,7 @@ export class CategoriesService {
           id: category.id,
           type: category.type,
           name: category.name,
-          totalAmount: category.totalAmount || 0,
+          balance: category.balance || 0,
           transferNumber: category.transferNumber || 0,
         })),
       };
