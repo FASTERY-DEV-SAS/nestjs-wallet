@@ -390,7 +390,7 @@ export class TransfersService {
       return {
         statusCode: HttpStatus.OK,
         message: 'Tasas obtenidas con éxito',
-        totalAmount: totalValueResult?.total || 0,
+        balance: totalValueResult?.total || 0,
         rates,
       };
     } catch (error) {
