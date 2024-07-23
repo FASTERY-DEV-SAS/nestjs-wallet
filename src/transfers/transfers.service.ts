@@ -241,6 +241,7 @@ export class TransfersService {
       // Consulta para obtener la suma total ajustada para tipos 'income' y 'expense'
       const totalSumQuery = this.transferRepository
         .createQueryBuilder('transfers')
+        .leftJoinAndSelect('transfers.category', 'category')
         .select(
           "SUM(CASE WHEN transfers.type = 'income' THEN transfers.total WHEN transfers.type = 'expense' THEN -transfers.total ELSE 0 END)",
           'sum'
