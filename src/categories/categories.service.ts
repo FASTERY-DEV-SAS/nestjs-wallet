@@ -75,7 +75,7 @@ export class CategoriesService {
   }
   // USER++
   async getCategoryBalance(user: User, paginationCategoryDto: PaginationCategoryDto) {
-    const { month, year } = paginationCategoryDto;
+    const { month, year, categoryId } = paginationCategoryDto;
     try {
       const query = this.categoryRepository.createQueryBuilder('category')
         .leftJoin('category.transfers', 'transfer')
@@ -86,6 +86,11 @@ export class CategoriesService {
         .addSelect('COUNT(transfer.id)', 'transferNumber')
         .where('category.userId = :userId', { userId: user.id })
         .groupBy('category.id');
+
+      if (categoryId) {
+        query.andWhere('category.id = :categoryId', { categoryId });
+      }
+
 
       if (month) {
         query.andWhere('EXTRACT(MONTH FROM transfer.createAt) = :month', { month });

@@ -31,6 +31,10 @@ export class PaginationCategoryDto {
 
   @IsString()
   @IsOptional()
+  categoryId: string;
+
+  @IsString()
+  @IsOptional()
   type: string;
 
   @IsString()
