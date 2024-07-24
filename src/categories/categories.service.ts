@@ -75,7 +75,7 @@ export class CategoriesService {
   }
   // USER++
   async getCategoryBalance(user: User, paginationCategoryDto: PaginationCategoryDto) {
-    const { month, year, categoryId } = paginationCategoryDto;
+    const { month, year, categoryId, type } = paginationCategoryDto;
     try {
       const query = this.categoryRepository.createQueryBuilder('category')
         .leftJoin('category.transfers', 'transfer')
@@ -89,6 +89,9 @@ export class CategoriesService {
 
       if (categoryId) {
         query.andWhere('category.id = :categoryId', { categoryId });
+      }
+      if (type) {
+        query.andWhere('category.type = :type', { type });
       }
 
 
@@ -109,7 +112,7 @@ export class CategoriesService {
           id: category.id,
           type: category.type,
           name: category.name,
-          balance: category.balance || 0,
+          balance: +category.balance || 0 as number,
           transferNumber: category.transferNumber || 0,
         })),
       };
