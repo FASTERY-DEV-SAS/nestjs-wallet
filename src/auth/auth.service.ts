@@ -64,7 +64,7 @@ export class AuthService {
       delete user.password;
       return {
         statusCode: HttpStatus.OK,
-        ...user,
+        user,
         token: this.getJwtToken({ id: user.id }),
       };
     } catch (error) {
