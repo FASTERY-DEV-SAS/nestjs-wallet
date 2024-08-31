@@ -318,6 +318,7 @@ export class TransfersService {
   }
   // USER+
   async getRates(user: User, paginationRateDto: PaginationRateDto) {
+    console.log('paginationRateDto:', paginationRateDto);
     const { limit, offset, month, year, walletId, type, subType, search } = paginationRateDto;
     try {
       const totalValueQuery = this.rateRepository.createQueryBuilder('rates')
