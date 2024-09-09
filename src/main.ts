@@ -29,7 +29,7 @@ async function bootstrap() {
     SwaggerModule.setup(uuid, app, document);
 
     await app.listen(envs.port);
-    logger.log(`Documentacion corriendo en: ${envs.hostApi}/${uuid}`);
-    logger.log(`Aplicacion corriendo en: ${envs.hostApi}${envs.apiPrefix}`);
+    logger.log(`Documentacion corriendo en: /${uuid}`);
+    logger.log(`Aplicacion corriendo en: ${envs.apiPrefix}`);
 }
 bootstrap();
