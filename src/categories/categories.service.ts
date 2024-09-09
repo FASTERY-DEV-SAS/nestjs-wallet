@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { Repository } from 'typeorm';
 import { PaginationCategoryDto } from './dto/pagination-category.dto';
-import { Transfer } from 'src/transfers/entities/transfer.entity';
 
 @Injectable()
 export class CategoriesService {
@@ -14,9 +13,6 @@ export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-
-    @InjectRepository(Transfer)
-    private readonly transferRepository: Repository<Transfer>,
   ) { }
 
   // USER++
@@ -34,7 +30,7 @@ export class CategoriesService {
       const newCategory = await this.categoryRepository.save(createCategoryProv);
       return {
         statusCode: HttpStatus.CREATED,
-        message: 'Category created successfully',
+        message: 'Categoria creada correctamente',
         categoryId: newCategory.id,
       };
     } catch (error) {
@@ -56,7 +52,6 @@ export class CategoriesService {
         where: { user: { id: user.id }, ...categoryFilter },
         order: { createAt: 'DESC' }
       });
-
       return {
         statusCode: HttpStatus.OK,
         message: 'Categorias obtenidas correctamente',

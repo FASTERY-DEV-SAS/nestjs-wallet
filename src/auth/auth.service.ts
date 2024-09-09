@@ -23,7 +23,7 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) { }
-
+  // USER++
   async register(createUserDto: CreateUserDto): Promise<{ statusCode: number; message: string }> {
     try {
       const { password, ...userData } = createUserDto;
@@ -34,8 +34,8 @@ export class AuthService {
       await this.userRepository.save(user);
       delete user.password;
       return {
-        statusCode: HttpStatus.CREATED,
         message: 'Usuario registrado con éxito.',
+        statusCode: HttpStatus.CREATED,
       };
     } catch (error) {
       this.logger.error(`Error in register ${createUserDto.userName}`);
@@ -48,12 +48,12 @@ export class AuthService {
       }
     }
   }
-
+  // USER++
   async login(loginUserDto: LoginUserDto) {
     try {
       const { password, email } = loginUserDto;
       const user = await this.userRepository.findOne({
-        where: { email },
+        where: { email, isActive: true },
         select: { email: true, password: true, id: true, userName: true },
       });
 
@@ -63,9 +63,9 @@ export class AuthService {
         throw new UnauthorizedException('Credeciales inválidas (password)');
       delete user.password;
       return {
-        statusCode: HttpStatus.OK,
         user,
         token: this.getJwtToken({ id: user.id }),
+        statusCode: HttpStatus.OK,
       };
     } catch (error) {
       this.logger.error(`Error in login ${loginUserDto.email}`);
@@ -85,7 +85,7 @@ export class AuthService {
       token: this.getJwtToken({ id: user.id }),
     };
   }
-
+  // SERVER++
   private getJwtToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
