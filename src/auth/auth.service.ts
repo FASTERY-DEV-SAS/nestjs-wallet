@@ -78,6 +78,27 @@ export class AuthService {
       }
     }
   }
+  // USER++
+  async getUserData(user: User) {
+    try {
+      const userData = await this.userRepository.findOne({
+        where: { id: user.id },
+      });
+      return userData;
+    } catch (error) {
+      this.logger.error(`Error in getUserData UserId: ${user.id}`);
+      if (error instanceof BadRequestException) {
+        error.message || 'Ocurrió un error al registrar el usuario.';
+      } else {
+        throw new InternalServerErrorException(
+          error.message || 'Ocurrió un error al registrar el usuario.',
+        );
+      }
+    }
+
+  }
+  // CERRAR SESIÓN
+  // REFRESCAR TOKEN
 
   async checkAuthStatus(user: User) {
     return {
