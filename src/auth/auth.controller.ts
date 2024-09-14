@@ -32,6 +32,12 @@ export class AuthController {
   login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
   }
+  // USER++
+  @Get('getUserData')
+  @Auth()
+  getUserData(@GetUser() user: User) {
+    return this.authService.getUserData(user);
+  }
   // USER
   @Get('check-auth-status')
   @Auth()
