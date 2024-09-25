@@ -39,7 +39,7 @@ export class TransfersService {
     try {
       const wallet = await queryRunner.manager.findOne(Wallet, {
         where: { id: createIncomeDto.walletId, user: { id: user.id }, isActive: true },
-        // lock: { mode: 'pessimistic_read' },
+        lock: { mode: 'pessimistic_write' },
       });
 
       if (!wallet) {
@@ -98,8 +98,6 @@ export class TransfersService {
     }
   }
 
-  // transferWalletToWallet
-
   // USER++
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
     let amountEntered = createExpenseDto.amount || 0;
@@ -121,7 +119,7 @@ export class TransfersService {
       console.log('Total', total);
       const wallet = await queryRunner.manager.findOne(Wallet, {
         where: { id: createExpenseDto.walletId, user: { id: user.id }, isActive: true, balance: MoreThanOrEqual(total) },
-        lock: { mode: 'pessimistic_read' },
+        lock: { mode: 'pessimistic_write' },
       });
       if (!wallet) {
         throw new NotFoundException('Billtera no encontrada o no tiene los recursos suficientes');
