@@ -68,7 +68,7 @@ export class AuthService {
         statusCode: HttpStatus.OK,
       };
     } catch (error) {
-      this.logger.error(`Error in login ${loginUserDto.email}`);
+      this.logger.error(`Error in login ${loginUserDto.email}`, error);
       if (error instanceof BadRequestException) {
         error.message || 'Ocurrió un error al registrar el usuario.';
       } else {
