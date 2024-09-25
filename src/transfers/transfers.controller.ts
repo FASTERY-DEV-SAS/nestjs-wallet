@@ -25,18 +25,18 @@ export class TransfersController {
     private readonly transfersService: TransfersService,
   ) { }
 
+    // @Post('transfer')
+  // @Auth(ValidRoles.user)
+  // transferWalletToWallet(@Body() createTransferDto: CreateTransferDto, @GetUser() user: User) {
+  //   return this.transfersService.transferWalletToWallet(createTransferDto, user);
+  // }
+
   // USER+
   @Post('createExpense')
   @Auth(ValidRoles.user)
   createExpense(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
     return this.transfersService.createExpense(createExpenseDto, user);
   }
-
-  // @Post('transfer')
-  // @Auth(ValidRoles.user)
-  // transferWalletToWallet(@Body() createTransferDto: CreateTransferDto, @GetUser() user: User) {
-  //   return this.transfersService.transferWalletToWallet(createTransferDto, user);
-  // }
 
   // USER+
   @Post('createIncome')
