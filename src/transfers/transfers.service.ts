@@ -97,7 +97,6 @@ export class TransfersService {
       await queryRunner.release();
     }
   }
-
   // USER++
   async createExpense(createExpenseDto: CreateExpenseDto, user: User) {
     let amountEntered = createExpenseDto.amount || 0;
@@ -197,6 +196,8 @@ export class TransfersService {
   // USER+
   async getTransfers(user: User, paginationDto: PaginationDto) {
     try {
+      // FIXME: QUE TAMBIEN FILTRE POR DIA
+      const day = paginationDto.day;
       const month = paginationDto.month;
       const year = paginationDto.year;
 
@@ -220,8 +221,7 @@ export class TransfersService {
       if (paginationDto.categoryId) {
         baseQuery.andWhere('category.id = :categoryId', { categoryId: paginationDto.categoryId });
       }
-
-      if (paginationDto.type) {
+      if (paginationDto.type !== 'all') {
         baseQuery.andWhere('transfers.type = :type', { type: paginationDto.type });
       }
 
@@ -257,7 +257,7 @@ export class TransfersService {
         totalSumQuery.andWhere('category.id = :categoryId', { categoryId: paginationDto.categoryId });
       }
 
-      if (paginationDto.type) {
+      if (paginationDto.type !== 'all') {
         totalSumQuery.andWhere('transfers.type = :type', { type: paginationDto.type });
       }
 

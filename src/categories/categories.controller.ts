@@ -29,11 +29,11 @@ export class CategoriesController {
     return this.categoriesService.getCategories(user, typeCategory);
   }
   // USER
-  @Get('getCategoryBalance')
+  @Get('getCategoriesBalance')
   @Auth(ValidRoles.user)
-  getCategoryBalance(
+  getCategoriesBalance(
     @GetUser() user: User, @Query() paginationCategoryDto: PaginationCategoryDto) {
-    return this.categoriesService.getCategoryBalance(user, paginationCategoryDto);
+    return this.categoriesService.getCategoriesBalance(user, paginationCategoryDto);
   }
 
   // USER++

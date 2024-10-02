@@ -59,10 +59,9 @@ export class WalletsController {
     return this.walletsService.updateWalletBalance(id);
   }
   // ADMIN+
-  // @Get('validateWalletBalance/:id')
-  // @Auth(ValidRoles.user)
-  // validateWalletBalance(@Param('id') id: string) {
-  //   return this.walletsService.validateWalletBalance(id);
-  // }
-  // DELETE: Eliminar billetera
+  @Get('validateWalletBalance/:id')
+  @Auth(ValidRoles.user)
+  validateWalletBalance(@GetUser() user: User, @Param('id') id: string) {
+    return this.walletsService.validateWalletBalance(user, id);
+  }
 }

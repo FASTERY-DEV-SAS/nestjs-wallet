@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import { IsIn, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
 
 export class PaginationDto {
   @IsOptional()
@@ -11,6 +11,10 @@ export class PaginationDto {
   @Min(0)
   @Type(() => Number)
   offset?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  day: number;
 
   @IsOptional()
   @Type(() => Number)
@@ -29,11 +33,10 @@ export class PaginationDto {
   categoryId: string;
 
   @IsString()
-  @IsOptional()
+  @IsIn(['expense', 'income', 'all'])
   type: string;
 
   @IsString()
   @IsOptional()
   search: string;
-
 }

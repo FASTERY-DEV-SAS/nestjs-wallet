@@ -69,7 +69,7 @@ export class CategoriesService {
     }
   }
   // USER++
-  async getCategoryBalance(user: User, paginationCategoryDto: PaginationCategoryDto) {
+  async getCategoriesBalance(user: User, paginationCategoryDto: PaginationCategoryDto) {
     const { month, year, categoryId, type } = paginationCategoryDto;
     try {
       const query = this.categoryRepository.createQueryBuilder('category')
